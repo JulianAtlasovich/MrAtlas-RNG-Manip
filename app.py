@@ -80,8 +80,12 @@ if st.button('Reset duel',key="reset_duel"):
 with st.expander("2 Identify the seed"):
     duelists = get_list_of_opponent_names()
     opponent_name = st.selectbox("Select the opponent:",options=duelists)
-    
     opponent_id = get_opponent_id_by_name(opponent_name)
+
+    no_field_type = True # default field type is None, but mages have a field type in campaign when duel starts
+    if opponent_id in Constants.opponents_with_special_field_type.keys():
+        duel_option = st.selectbox(label = 'Select where duel is taking place',options=['Free duel','Campaign'],key='duel_option')
+        no_field_type = True if duel_option == 'Free duel' else False
     if opponent_name != "Duel Master K":
         opp_pool = read_pool(opponent_name, 'Deck')
         opp_pool_cards = get_card_data_from_card_ids(sorted(set(opp_pool)))    
@@ -125,7 +129,7 @@ with st.expander("2 Identify the seed"):
         # Iterate over possible seed indexes and discard them based on the opponent cards
         for possible_seed_index in possible_seed_indexes[:]: #iterate over a copy of the list to allow removal during iteration
             (poss_opp_deck, _) = create_opponent_deck(opp_pool, possible_seed_index,opponent_name,player_card_ids_in_deck)            
-            opp_cards_to_play_order = generate_opponents_cards_to_play_order(opponent_id,poss_opp_deck,True) #3rd param is no_field_type
+            opp_cards_to_play_order = generate_opponents_cards_to_play_order(opponent_id,poss_opp_deck,no_field_type) 
             for i,enemy_card in enumerate(selected_opponent_cards):
                 if enemy_card != opp_cards_to_play_order[i].cardID:
                     possible_seed_indexes.remove(possible_seed_index)
@@ -156,7 +160,7 @@ with st.expander("3: Player and Opponent Deck (informational, no action needed)"
         # Iterate over all possible seed indexes and save all possible opponent decks
         for possible_seed_index in possible_seed_indexes:
             (poss_opp_deck, _) = create_opponent_deck(opp_pool, possible_seed_index,opponent_name,player_card_ids_in_deck)
-            opp_cards_to_play_order = generate_opponents_cards_to_play_order(opponent_id, poss_opp_deck, True)  # 3rd param is no_field_type
+            opp_cards_to_play_order = generate_opponents_cards_to_play_order(opponent_id, poss_opp_deck, no_field_type)
             list_of_possible_opp_decks.append([card.cardID for card in opp_cards_to_play_order])
             player_deck_shuffled = create_player_deck(player_card_ids_in_deck, possible_seed_index)
             list_of_possible_player_decks.append(player_deck_shuffled)
@@ -183,7 +187,7 @@ with st.expander("3: Player and Opponent Deck (informational, no action needed)"
     if initial_seed_index is not None:  # Initial seed index identified
         setup_load_db_to_memory(initial_seed_index) # load dbs to memory with variable anim steps for the identified initial seed index
         (poss_opp_deck, _) = create_opponent_deck(opp_pool, initial_seed_index,opponent_name,player_card_ids_in_deck)
-        opp_cards_to_play_order = generate_opponents_cards_to_play_order(opponent_id, poss_opp_deck, True)  # 3rd param is no_field_type
+        opp_cards_to_play_order = generate_opponents_cards_to_play_order(opponent_id, poss_opp_deck, no_field_type)
         st.write("Player's deck order:")
         player_deck_shuffled = create_player_deck(player_card_ids_in_deck, initial_seed_index)
         player_deck_shuffled = get_card_data_from_card_ids(player_deck_shuffled)
