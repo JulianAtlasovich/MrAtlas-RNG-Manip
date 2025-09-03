@@ -404,8 +404,11 @@ with st.expander("Last Turn"):
         hand = get_card_data_from_card_ids(last_hand_card_ids)
         
         #Field Cards
+        col1, col2 = st.columns(2)
         my_cards_in_field = []
-        num_cards_in_field = st.number_input(f"Number of player cards in the field", min_value=1, max_value=4, key=f"last_turn_num_cards_in_field")
+        num_cards_in_field = col1.number_input(f"Number of player cards in the field", min_value=1, max_value=4, key=f"last_turn_num_cards_in_field")
+        field_type = col2.selectbox("Field Type", options=[x[1] for x in Constants.field_types], key="last_turn_field_type")
+        field_type_id = [x[0] for x in Constants.field_types if x[1] == field_type][0]
         for i in range(num_cards_in_field):
             col1, col2, col3 = st.columns(3)
             selected_card_input = col1.selectbox(label = f'Field card {i + 1}',options=[f"{card['Id']}: {card['Name']}" for card in Constants.card_data if card['Type'] < 20], key=f"player_last_turn_field_card_{i}",index=None)
@@ -431,7 +434,7 @@ with st.expander("Last Turn"):
         enemy_drop_pool_card_ids.sort()
         enemy_drop_pool_cards = get_card_data_from_card_ids(enemy_drop_pool_card_ids)
         desired_drop_cards = st.multiselect("Desired cards:",[f"{card.cardID}: {card.name}" for card in enemy_drop_pool_cards],key='last_turn_desired_drop_cards')
-        field_type = 1 #default to None
+        
         
         #cards_left_in_opp_deck = st.text_input("Number of cards left in opponent's deck:") #this can be used in the future to calculate longer chains, where if drop is not found then we can go to next turn and try again with the new cards
         #cards_left_in_player_deck = st.text_input("Number of cards left in player's deck:") #this can be used in the future to calculate longer chains, where if drop is not found then we can go to next turn and try again with the new cards
@@ -441,7 +444,7 @@ with st.expander("Last Turn"):
 
         if search and remaining_enemy_LP and len(desired_drop_cards) > 0 and enemy_card:
             seed_index_at_start_of_last_turn = event_history[-1].new_seed_index
-            main_phase_actions = generate_main_phase_actions(hand,my_cards_in_field,seed_index_at_start_of_last_turn,field_type,enemy_card)
+            main_phase_actions = generate_main_phase_actions(hand,my_cards_in_field,seed_index_at_start_of_last_turn,field_type_id,enemy_card)
             st.write(len(main_phase_actions), " possible Main Phase actions")
             plays = []
             search_start_time = datetime.now()
