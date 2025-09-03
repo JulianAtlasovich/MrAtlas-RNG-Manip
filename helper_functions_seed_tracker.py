@@ -1,5 +1,4 @@
 import sqlite3
-from tabulate import tabulate
 from read_dbs import *
 from rng_core import *
 from drop_manip_classes_and_constants import *
