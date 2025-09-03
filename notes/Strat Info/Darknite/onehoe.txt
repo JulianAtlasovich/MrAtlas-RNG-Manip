@@ -1,0 +1,23 @@
+2988
+
+Frames until first boom - 64 (but most passes anyway, so figure roughly 20)
+Between boom 1 and boom 2 - 90
+Between boom 2 and boom 3 - 147
+
+10th boom = 1048
+12th boom = 1285
+15th boom = 1588
+
+Music begins at boom 9
+
+15th boom and 35 randoms
+
+50 ran and 10th boom would work but is too fast
+11th boom, 46
+
+I can do 50 by boom 12
+
+43 random, 12th boom
+
+45 in 11th boom
+

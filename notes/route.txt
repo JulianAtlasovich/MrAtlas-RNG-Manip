@@ -1,0 +1,111 @@
+route
+my goal is to be better than 16h 48m (WR in 15card mod 100%)
+
+simon - save
+[duel grounds] 
+tea
+villager 3
+cutscene - save
+
+pass jono and duel seto - save
+jono - save 
+villager 1 - save
+villager 2 - save
+[palace/cutscene] - save
+##tournament ##
+[duel ground]
+[decline duel jono] - save
+[hidden battle ground]
+jono
+tea
+[kings valley]
+[ask to see ruins] (not parents tomb)
+[pharaos palace]
+mage soldier
+[kings valley]
+[return] (dont look at map or drwaing)
+## add to deck umi mountain equips
+low medow mage - save (exit before high medow mage)
+farm low medow for 3 mbds
+
+farm
+simon:
+    S/A
+    Blackland Fire Dragon
+
+    
+
+duel master k:
+    S/A
+    Dragon Zombie
+    baby Dragon
+    dragon statue    
+    One-eyed Shield Dragon
+    Wicked Dragon with the Ersatz Head
+    Oscillo Hero #2
+    LaLa Li-oon
+    Kaminarikozou
+    Bolt Penguin
+    Electric Snake
+    
+    
+tea:
+    BCD
+    fake trap
+
+Villager 3: (7% he starts with >= 1600)
+    S/A
+    
+
+jono:
+    S/A
+    Yamatano Dragon Scroll    
+
+villager 1:
+    S/A
+    fake trap x2
+
+villager 2:
+    S/A
+
+seto:
+    S/A
+    Petit Dragon
+
+Rex
+    S/A
+    Crawling Dragon #2
+    
+    BCD
+    Beast fangs x3
+
+    S/A TEC
+    Invigoration
+
+shadi:
+    S/A
+    Umi (or BCD)
+
+Isis:
+    CBD
+    Widespread ruin x3
+
+Yami Bakura
+    BCD
+    Black Pendant
+
+Pegasus
+    SA TEC
+    Bright Castle x3 
+    Megamorph x3
+
+kaiba:
+    BCD
+    Dragon Capture Jar
+
+    SA TEC
+    Crush Card
+
+mage soldier:
+    BCD
+    Dark Energy

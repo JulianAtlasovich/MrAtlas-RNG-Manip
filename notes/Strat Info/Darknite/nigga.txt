@@ -1,0 +1,93 @@
+END SETO
+3 textboxes
+MENUING OPTION 1
+8 textboxes
+MENUING OPTION 2
+38 textboxes
+START DARKNITE
+
+175298 - 175342
+
+End frame DarkNite: 174395
+Started Nitemare: 174647
+252 frames go by
+463 boom 5
+373 boom 6
+
+15 frames to first boom
+Between boom 1 and boom 2 = 90
+Between boom 2 and boom 3 = 141
+940 frames to kill
+
+9 random, 6th boom
+567 on booms, 360 randoms
+
+5th boom, 5 randoms, all fast textboxes
+4 textboxes to work with
+
+679 away from 175320
+Hit 175331
+5 randoms 5th boom = 690
+
+On boom 3, you've used 246 frames.
+4 = 336
+5 = 477
+6 = 567
+7 = 708
+
+*IN BETWEEN BOOM 0 AND BOOM 1, THERE ARE 64 FRAMES*
+
+726 frames
+662 = math 5 boom 5 random
+
+681
+
+
+Doing 4th boom, 7 randoms, 0 textboxes = 665
+
+Frame Range 1
+-------------
+4 textboxes, 0 random, 5th noom = 169 early
+4 textboxes, 4 random, 5th noom = 9 early
+3 textboxes, 4 random, 5th boom = 175317
+
+Frame Range 2
+--------------
+4 textboxes, 0 randoms, 0th boom = -692
+4 textboxes, 0 randoms, 5th boom = -76
+4 textboxes, 2 randoms, 5th boom = +4
+3 textboxes, 2 randoms, 5th boom = 175318
+
+
+
+
+4 randoms, 5th boom = 
+
+
+Frame Range 2
+-------------
+4 fast textboxes, 0 randoms, 0th boom = 174628
+4 fast textboxes, 0 randoms, 0th boom = 692 Early
+4 fast textboxes, 0 randoms, 5th boom = 166 Early
+4 fast textboxes, 4 randoms, 5th boom = 6 Early
+
+3 fast textboxes, 4 randoms, 5th boom = Perfect
+
+---------------
+0 to 1 = 64
+1 to 2 = 90
+2 to 3 = 141
+3 to 4 = 90
+4 to 5 = 141
+Aim for 320
+
+0 textboxes, 5 randoms, 5th boom = 175354
+0 textboxes, 5 randoms, 5th boom = 175354
+0 textboses, 5 randoms, 4th boom = 175213
+
+
+0 textboxes, 4 randoms, 5th boom = 6 Early
+0 textboxes, 5 randoms, 4th boom = 213
+0 textboxes, 8 randoms, 4th boom = 333
+2 textboxes, 8 randoms, 4th boom = 321
+

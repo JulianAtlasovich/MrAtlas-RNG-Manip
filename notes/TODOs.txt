@@ -1,0 +1,15 @@
+TODOs
+must:
+- making event tracking simpler by combining events
+- adding dropdowns for field type in section 2 and last turn and using it in calcultions
+
+nice to have:
+- remove all the uses of the DB FmDatabase, so it's all consolidated into one. Also check if it's being used inside any loop that could be moved to initial load_dbs
+- adding dropdown for campaign vs free mode (for mages)
+
+DONE
+- add duel master k
+- making one global reset button to start new duel
+- change in last turn to enter opp remaining cards instead of putting the card itself
+- on each dropdown of card selection add a default of none selected
+- save the deck in browser storage for when I refresh site 

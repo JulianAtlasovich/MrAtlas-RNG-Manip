@@ -1,0 +1,7 @@
+If MBD is NOT in slot 6 (first card in second hand) against Seto 3rd, you have Invader 2. If MBD IS in slot 6, AND the first card played by Seto was BEWD, you have Invader 2. If MBD IS in slot 6, AND the first card played by Seto is NOT BEWD, you have Invader 1.
+
+MBD in slot 7 = Invader 2
+MBD in slot 6 + BEWD turn 1 = Invader 2
+MBD in slot 6 + not BEWD turn 1 = Invader 1
+
+If MBD is in slot 6 (first card in second hand) and he does NOT play BEWD on the first turn, you have Invader 1. For anything else, you have Invader 2.

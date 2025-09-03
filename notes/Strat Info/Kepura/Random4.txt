@@ -1,0 +1,11 @@
+Meadow Manip Adjustments
+------------------------
+
+If you win Shadow Specter at the end of the Low Meadow Mage duel, you must determine which frame you actually ended on. To do this:
+
+- If you drew 1 MBD in the opening hand and not 2, you are on frame 32352.
+
+- If you drew 2 MBDs in the opening hand of the duel, you can still be on one of two frames. To determine which one, you can do one of two things:
+    1.) Was the last card in your opening hand a card that appears early in the alphabet or late? If it appears early, you are on frame 32327. Late is 32352.
+
+    2.) What was the second card played by Meadow Mage? If it was a Mercury (Swamp Battleguard), you're on frame 32327. If it was another Jupiter (Nekogal), you're on frame 32352.

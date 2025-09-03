@@ -1,0 +1,54 @@
+12:25Twitch Primesiccarius: if youre going to manip, why not just get 1 MBD?
+12:26ModeratorTwitch PrimeGenericMadScientist: Hey GFC.
+12:26tommorow1111: consistency of winning
+12:27ModeratorGCAH2006: Even when you manip everything, I reckon 3 is faster than 2 for RTA
+12:27JayB5150: 2 of you are faster than 1
+12:27ModeratorTwitch PrimeGenericMadScientist: Routing everything with double MBD would be hard.
+12:27JayB5150: If Im honest
+12:27ModeratorTwitch PrimeGenericMadScientist: I agree 3 would be best even then.
+12:27Twitch Primesiccarius: I mean 1 MBD + THTD would be the same amount of turns?
+12:27BroadcasterSubscriberVerifiedGFC_: you cannot manip THTD draws
+12:27BroadcasterSubscriberVerifiedGFC_: well
+12:27BroadcasterSubscriberVerifiedGFC_: you CAN
+12:28BroadcasterSubscriberVerifiedGFC_: but it's slower than just getting a second MBD
+12:28ModeratorGCAH2006: The only thing that might be worth is beating WT with 2 and manip MBD on a mage.
+12:28BroadcasterSubscriberVerifiedGFC_: fusing every duel is slow
+12:28BroadcasterSubscriberVerifiedGFC_: you'd waste much more time over the run than if you just got a 2nd mbd
+12:28ModeratorGCAH2006: It literally cost less than 1:30 to get a second MBD now
+12:28ModeratorGCAH2006: lel
+12:28BroadcasterSubscriberVerifiedGFC_: not to mention figuring out manips with only 1 MBD and THTD draws would be nearly impossible
+12:29BroadcasterSubscriberVerifiedGFC_: like remember
+12:29BroadcasterSubscriberVerifiedGFC_: finding manips is something that we can only control to a point
+12:29BroadcasterSubscriberVerifiedGFC_: so the odds are, finding duels where you draw 1 MBD and then a THTD would require a lot of waiting to get to the right seed
+12:29Twitch Primesiccarius: Fair enough. Thanks for the response.
+12:29BroadcasterSubscriberVerifiedGFC_: the more cards you have to draw, the less likely you're going to find a frame where it happens
+12:30BroadcasterSubscriberVerifiedGFC_: so needing to draw 4 cards every single duel means you need to find a frame where that happens
+12:30BroadcasterSubscriberVerifiedGFC_: not just A frame either, but multiple
+12:30BroadcasterSubscriberVerifiedGFC_: even if you find that range, the odds are it wont be early on
+12:30BroadcasterSubscriberVerifiedGFC_: so you'd have to do a lot of waiting for the seed to advance to it
+12:31BroadcasterSubscriberVerifiedGFC_: overall it's ALWAYS going to be faster to get more than 1 MBD, every time
+12:31BroadcasterSubscriberVerifiedGFC_: for RTA
+12:31BroadcasterSubscriberVerifiedGFC_: and not only is it faster, but it's MUCH easier
+12:31BroadcasterSubscriberVerifiedGFC_: but disregarding difficulty and just looking solely at speed, 2 MBDs is fastest
+12:31BroadcasterSubscriberVerifiedGFC_: and honestly 3 is probably faster still for RTA
+12:32BroadcasterSubscriberVerifiedGFC_: in a TAS, 2 would be fine
+12:32BroadcasterSubscriberVerifiedGFC_: 2 would be fastest
+12:32BroadcasterSubscriberVerifiedGFC_: but in RTA, you need to locate multiple frames in a row where you draw what you need
+12:32BroadcasterSubscriberVerifiedGFC_: because a human doesnt play frame perfectly for an entire run
+12:32BroadcasterSubscriberVerifiedGFC_: not possible
+12:32BroadcasterSubscriberVerifiedGFC_: because of that, we need like 10 frames or 20 frames where we draw what we need
+12:33BroadcasterSubscriberVerifiedGFC_: and finding those ranges sometimes requires a lot of in game waiting for the frame count to count up to where we need it to be to hit that range
+12:33BroadcasterSubscriberVerifiedGFC_: for example, my new darknite strat requires waiting quite a bit so the game can hit the favorable range
+12:33BroadcasterSubscriberVerifiedGFC_: so even in manip, we still are kinda at the mercy of the game
+12:34BroadcasterSubscriberVerifiedGFC_: in this game, it's set in absolute stone that you WILL DRAW x cards against x duelist on x frame
+12:34BroadcasterSubscriberVerifiedGFC_: so if we get unlucky and it takes 2,000 frames until we get the draws we need, there's just nothing we can do
+12:34ModeratorTwitch PrimeGenericMadScientist: Dude, I think the point is made.
+12:34BroadcasterSubscriberVerifiedGFC_: lmaoi
+12:34BroadcasterSubscriberVerifiedGFC_: im putting this into an faw
+12:34BroadcasterSubscriberVerifiedGFC_: faq
+12:34ModeratorGCAH2006: inb4 Global
+12:34BroadcasterSubscriberVerifiedGFC_: hence why i continued
+12:34BroadcasterSubscriberVerifiedGFC_: copy pastaing this
+12:35tommorow1111: yeah thought thats what he was doing
+12:35BroadcasterSubscriberVerifiedGFC_: i get asked that question a lot, figured if i was gonna explain it im gonna do it the long way so i can copy/paste into my faq
+12:35BroadcasterSubscriberVerifiedGFC_: OpieOP

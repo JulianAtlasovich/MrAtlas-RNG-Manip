@@ -1,0 +1,11 @@
+Frame Range 11
+--------------
+36004
+
+
+9 = 35968
+
+Long pause for booms = 147 frames
+Short pause for booms = 
+
+10 randoms, 5th boom, 5 textboxes

@@ -1,0 +1,40 @@
+01 - Angel
+02 - Armed
+03 - Baby
+04 - Blackland
+05 - Bone
+06 - Bone
+07 - Burg
+08 - Cyber
+09 - Cyber
+10 - Dark
+11 - Djinn
+12 - Djinn
+13 - Hard
+14 - Lala
+15 - Lala
+16 - MBD
+17 - MBD
+18 - MBD
+19 - Monster
+20 - Muka
+21 - Muka
+22 - Mystery
+23 - Mystic
+24 - Nemuriko
+25 - One eyed
+26 - One eyed
+27 - One eyed
+28 - Ooguchi
+29 - Oscillo
+30 - Petit
+31 - Phantom
+32 - Pot
+33 - Drdek
+34 - Immortal
+35 - Wandering
+36 - Tomo
+37 - Umi
+38 - Winged Cleaver
+39 - Yamatano
+40 - Zone
