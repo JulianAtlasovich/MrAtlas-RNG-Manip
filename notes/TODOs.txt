@@ -1,11 +1,12 @@
 TODOs
 must:
 - making event tracking simpler by combining events
-- add field type dropdown on last turn and using it in calcultions
+
 
 nice to have:
 - remove all the uses of the DB FmDatabase, so it's all consolidated into one. Also check if it's being used inside any loop that could be moved to initial load_dbs
-- adding dropdown for campaign vs free mode (for mages)
+- making it possible to fuse with cards already in the field on the last turn
+- performance improvements, more caching and minimize usage of database
 
 DONE
 - add duel master k
@@ -14,3 +15,8 @@ DONE
 - on each dropdown of card selection add a default of none selected
 - save the deck in browser storage for when I refresh site 
 - on mages add dropdown to select between free duel and campaign (to determine default field type)
+- add field type dropdown on last turn and using it in calcultions
+
+---
+- started the deck count from 1 instead of 0
+- convert last turn section into a form so it doesn't update whole app
