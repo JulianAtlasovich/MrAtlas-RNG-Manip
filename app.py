@@ -208,7 +208,16 @@ with st.expander("3: Player and Opponent Deck (informational, no action needed)"
 
 # Section 4
 with st.expander("4: Add actions"):
-    
+    if 'count_fusions' not in st.session_state:
+        st.session_state['count_fusions'] = 0
+    if 'count_traps' not in st.session_state:
+        st.session_state['count_traps'] = 0
+    if 'count_effective_attacks' not in st.session_state:
+        st.session_state['count_effective_attacks'] = 0
+    if 'count_equips' not in st.session_state:
+        st.session_state['count_equips'] = 0
+    if 'count_magics' not in st.session_state:
+        st.session_state['count_magics'] = 0
     a = """ with st.expander("List of Possible Events:"):
         df_events = pd.DataFrame([{"Event ID": event.event_id, "Name": event.name, "Seed Advancements": event.seed_advancements , "Description": event.description} for event in Constants.events])
         df_events = df_events[df_events["Event ID"] != 0] # Exclude the initial deck shuffling event from display
