@@ -20,3 +20,6 @@ DONE
 ---
 - started the deck count from 1 instead of 0
 - convert last turn section into a form so it doesn't update whole app
+---
+- seed identification section dropdows are now only populated with possible options of cards after 5th
+- separated player cards into groups of 5 in seed identification section
