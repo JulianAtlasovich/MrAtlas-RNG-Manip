@@ -88,6 +88,11 @@ def object_list_to_value_list(object_list):
     result.append(myObject.values_to_list())
   return result
 
+def get_event_id_by_name(event_name):
+  for event in Constants.events:
+    if event.name == event_name:
+      return event.event_id
+  return None
 
 def create_player_deck(deck,seed_index):
   seed = index_to_seed(seed_index)

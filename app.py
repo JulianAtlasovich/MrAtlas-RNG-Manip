@@ -61,6 +61,11 @@ if st.button('Reset duel',key="reset_duel"):
 
     #section 4 Events
     st.session_state['events_input'] = ""
+    st.session_state['count_fusions'] = 0
+    st.session_state['count_traps'] = 0
+    st.session_state['count_effective_attacks'] = 0
+    st.session_state['count_equips'] = 0
+    st.session_state['count_magics'] = 0
 
     # section 6 last turn 
     st.session_state['player_last_turn_field_card_0'] = None
@@ -203,17 +208,13 @@ with st.expander("3: Player and Opponent Deck (informational, no action needed)"
 
 # Section 4
 with st.expander("4: Add actions"):
-    count_fusions = 0
-    count_traps = 0
-    count_effective_attacks = 0
-    count_equips = 0
-    count_magics = 0
-    with st.expander("List of Possible Events:"):
+    
+    a = """ with st.expander("List of Possible Events:"):
         df_events = pd.DataFrame([{"Event ID": event.event_id, "Name": event.name, "Seed Advancements": event.seed_advancements , "Description": event.description} for event in Constants.events])
         df_events = df_events[df_events["Event ID"] != 0] # Exclude the initial deck shuffling event from display
-        st.dataframe(df_events, use_container_width=True,hide_index = True)
+        st.dataframe(df_events, use_container_width=True,hide_index = True) """
     event_history = []
-
+    a = """ 
     st.write("Add events by clicking below:")
     if 'events_input' not in st.session_state:
         st.session_state['events_input'] = ""
@@ -233,6 +234,79 @@ with st.expander("4: Add actions"):
         if cols3[idx].button(f"{event.event_id}:  {event.name}", key=f"event_btn_row3_{event.event_id}"):
             st.session_state['events_input'] += f" {event.event_id}"
 
+    st.write('---') """
+
+    for i, action in enumerate(Constants.actions):
+        col1, col2, col3, col4, col5, col6 = st.columns(6,vertical_alignment="bottom")
+        col1.write(' ')
+        add_action = col1.button(f'Add {action.name}', key=f"action_add_btn_{action.action_id}",width ='stretch')
+
+        if action.name in ['Attack Card','Change Field','Fusion','Equip','Trap Triggered']: #not in ["Dump","Attack LP"]:
+            who_did_the_action = col2.selectbox('Who did the action?', options=['Player', 'Opponent'], key=f"action_who_{i}")
+        
+        if action.name == "Attack Card":
+            was_card_destroyed = col3.selectbox('Attacked Card destroyed?', options=['Yes', 'No'], key=f"action_attack_destroyed_{i}")
+            was_gs_anim = col4.selectbox('GS Animation?', options=['No', 'Yes'], key=f"action_gs_anim_{i}")
+            atk_card_mode = col5.selectbox('Attacked Card Mode', options=['DEF','ATK'], key=f"action_attack_type_{i}")
+            if atk_card_mode == 'ATK':
+                dmg_done = col6.selectbox('Damage done',options=['< 1000','>= 1000','0'], key=f"action_attack_damage_{i}")
+            
+            # Add events based on selections
+            if add_action:
+                st.session_state['events_input'] += f" {get_event_id_by_name('GS_ANIM')}" if was_gs_anim == 'Yes' else ''
+                if atk_card_mode == 'ATK':
+                    st.session_state['events_input'] += f" {get_event_id_by_name('LOSE_ATTACK')}" if was_card_destroyed == 'No' else ''
+                    st.session_state['count_effective_attacks'] += 1 if who_did_the_action == 'Player' and was_card_destroyed == 'Yes' else 0
+                    if dmg_done != '0':
+                        st.session_state['events_input'] += f" {get_event_id_by_name('SWIPE_ATK_LOW')}" if dmg_done == '< 1000' else f" {get_event_id_by_name('SWIPE_ATK_HIGH')}" if dmg_done == '>= 1000' else ''
+                        st.session_state['events_input'] += f" {get_event_id_by_name('BURN')}"
+                    if dmg_done == '0':
+                        st.session_state['events_input'] += f" {get_event_id_by_name('SWIPE_DEF')} {get_event_id_by_name('BURN')} {get_event_id_by_name('SWIPE_DEF')} {get_event_id_by_name('BURN')}"
+            
+                if atk_card_mode == 'DEF':
+                    if was_card_destroyed == 'No':
+                        st.session_state['events_input'] += f" {get_event_id_by_name('LOSE_ATTACK')}"                    
+                    else:
+                        st.session_state['events_input'] += f" {get_event_id_by_name('SWIPE_DEF')}"
+                        st.session_state['events_input'] += f" {get_event_id_by_name('BURN')}"
+            
+            
+
+        if action.name == "Attack LP":
+            action_attack_damage = col2.selectbox('Damage done',options=['>= 1000','< 1000'], key=f"action_attack_damage_{i}")
+            if add_action:
+                match action_attack_damage:
+                    case '< 1000':
+                        st.session_state['events_input'] += f" {get_event_id_by_name('DIRECT_LOW')}"
+                    case '>= 1000':
+                        st.session_state['events_input'] += f" {get_event_id_by_name('DIRECT_HIGH')}"               
+        
+        if action.name == "Change Field":
+            field_type_selected = col3.selectbox('Field Type',options=['Mountain','Yami','Other'], key=f"action_change_field_{i}")
+            if add_action:
+                st.session_state['count_magics'] += 1 if who_did_the_action == 'Player' else 0
+                match field_type_selected:
+                    case 'Mountain':
+                        st.session_state['events_input'] += f" {get_event_id_by_name('FIELD_MOUNT')}"
+                    case 'Yami':
+                        st.session_state['events_input'] += f" {get_event_id_by_name('FIELD_YAMI')}"
+                    case 'Other':
+                        st.session_state['events_input'] += f" {get_event_id_by_name('FIELD_USUAL')}"
+
+        if action.name == "Dump" and add_action:
+            st.session_state['events_input'] += f" {get_event_id_by_name('DUMP')}" 
+        
+        if action.name == "Fusion" and add_action:
+            st.session_state['events_input'] += f" {get_event_id_by_name('FUSION')}"
+            st.session_state['count_fusions'] += 1 if who_did_the_action == 'Player' else 0
+        
+        if action.name == "Equip" and add_action:
+            st.session_state['events_input'] += f" {get_event_id_by_name('EQUIP')}"
+            st.session_state['count_equips'] += 1 if who_did_the_action == 'Player' else 0
+
+        if action.name == "Trap Triggered" and add_action:
+            st.session_state['events_input'] += f" {get_event_id_by_name('TRAP_TRIGGERED')}"
+            st.session_state['count_traps'] += 1 if who_did_the_action == 'Player' else 0
 
     events_input = st.text_input("Use the buttons above to populate the events", key = "events_input")
     if events_input:
@@ -241,13 +315,6 @@ with st.expander("4: Add actions"):
         
         for i, event_id in enumerate(event_ids):
             selected_event = next((event for event in Constants.events[:] if event.event_id == event_id), None)
-            
-            #Add count to metrics
-            count_fusions += 1 if selected_event.name == "FUSION" else 0
-            count_traps += 1 if selected_event.name == "TRAP_TRIGGERED" else 0
-            count_effective_attacks += 1 if selected_event.name in ["SWIPE_ATK_HIGH","SWIPE_ATK_LOW"] else 0
-            count_equips += 1 if selected_event.name == "EQUIP" else 0
-            count_magics += 1 if selected_event.name in ["FIELD_YAMI","FIELD_MOUNT","FIELD_USUAL"] else 0
             
             # Add initial and new seed index to each event when initial seed index is known
             if initial_seed_index is not None:
@@ -282,18 +349,17 @@ with st.expander("4: Add actions"):
 
     #Display the metrics
     if initial_seed_index is not None or 1==1:
-        st.write('the numbers shown here are the total counts, including player + opponent')
         cols_display_counts = st.columns(6)
         with cols_display_counts[0]:
-            st.metric("Fusions", count_fusions)
+            st.metric("Fusions", st.session_state['count_fusions'])
         with cols_display_counts[1]:
-            st.metric("Traps", count_traps)
+            st.metric("Traps", st.session_state['count_traps'])
         with cols_display_counts[2]:
-            st.metric("Effective Attacks", count_effective_attacks)
+            st.metric("Effective Attacks", st.session_state['count_effective_attacks'])
         with cols_display_counts[3]:
-            st.metric("Equips", count_equips)
+            st.metric("Equips", st.session_state['count_equips'])
         with cols_display_counts[4]:
-            st.metric("Magics", count_magics)
+            st.metric("Magics", st.session_state['count_magics'])
         with cols_display_counts[5]:
             st.metric("Seed Index", event_history[-1].new_seed_index if initial_seed_index is not None and len(event_history)>0 else '?')
 # Section 5
@@ -320,75 +386,78 @@ with st.expander("Duel Rank calculator (optional)"):
             keep_key = f'keep_{k}'
             if not st.session_state[keep_key]:
                 st.session_state[k] = Constants.duel_rank_defaults[k]
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        cb, inp = st.columns([1, 30])
-        cb.write(" ")  # spacer for alignment
-        cb.write(" ")
-        cb.checkbox(" ", key='keep_num_fusions', label_visibility='collapsed')
-        inp.number_input("Fusions (1,5,10,15)", min_value=0, key='num_fusions')
-        cb, inp = st.columns([1, 30])
-        cb.write(" ")
-        cb.write(" ")
-        cb.checkbox(" ", key='keep_num_magics', label_visibility="collapsed")
-        inp.number_input("Magics (1,4,7,10)", min_value=0, key='num_magics')
-        cb, inp = st.columns([1, 30])
-        cb.write(" ")
-        cb.write(" ")
-        cb.checkbox(" ", key='keep_num_equips', label_visibility="collapsed")
-        inp.number_input("Equips (1,5,10,15)", min_value=0, key='num_equips')
-        cb, inp = st.columns([1, 30])
-        cb.write(" ")
-        cb.write(" ")
-        cb.checkbox(" ", key='keep_num_cards_left', label_visibility="collapsed")
-        inp.number_input("Cards left in your deck [complement of cards used] (31,27,7,3)", min_value=0, key='num_cards_left')
-        cb, inp = st.columns([1, 30])
-        cb.write(" ")
-        cb.write(" ")
-        cb.checkbox(" ", key='keep_num_facedowns', label_visibility="collapsed")
-        inp.number_input("Facedowns (1,11,21,31)", min_value=0, key='num_facedowns')
-    with col2:
-        cb, inp = st.columns([1, 30])
-        cb.write(" ")
-        cb.write(" ")
-        cb.checkbox(" ", key='keep_num_traps', label_visibility="collapsed")
-        inp.number_input("Traps (1,3,5,7)", min_value=0, key='num_traps')
-        cb, inp = st.columns([1, 30])
-        cb.write(" ")
-        cb.write(" ")
-        cb.checkbox(" ", key='keep_remaining_lp', label_visibility="collapsed")
-        inp.selectbox("Remaining Life Points",options=['8000','7000 - 7999','1000 - 6999','100 - 999','< 100'],key='remaining_lp')
-        cb, inp = st.columns([1, 30])
-        cb.write(" ")
-        cb.write(" ")
-        cb.checkbox(" ", key='keep_num_opp_cards_left', label_visibility="collapsed")
-        inp.number_input("Opponent cards left [complement of num of turns] (31,27,7,3)", min_value=0, key='num_opp_cards_left') # 9 turns equal 27 cards left in opp deck
-        cb, inp = st.columns([1, 30])
-        cb.write(" ")
-        cb.write(" ")
-        cb.checkbox(" ", key='keep_num_defensive_wins', label_visibility="collapsed")
-        inp.number_input("Defensive wins (2,6,10,15) ", min_value=0, key='num_defensive_wins')
-        cb, inp = st.columns([1, 30])
-        cb.write(" ")
-        cb.write(" ")
-        cb.checkbox(" ", key='keep_num_effectives', label_visibility="collapsed")
-        inp.number_input("Effective attacks (2,4,10,20) ", min_value=0, key='num_effectives')
 
-    duel_rank_points, duel_rank = calculate_duel_rank(
-        st.session_state['num_fusions'],
-        st.session_state['num_effectives'],
-        st.session_state['num_facedowns'],
-        st.session_state['num_magics'],
-        st.session_state['num_equips'],
-        st.session_state['num_traps'],
-        40 - st.session_state['num_cards_left'], #To Do: verify this is a correct way to calculate used cards
-        36 - st.session_state['num_opp_cards_left'], #To Do: verify this is a correct way to calculate number of turns
-        st.session_state['num_defensive_wins'],
-        st.session_state['remaining_lp']
-    )
-    st.write("Duel Rank Points:", duel_rank_points)
-    st.write("Duel Rank:", duel_rank)
+    with st.form("duel_rank_calculator_form",enter_to_submit=False,border=False):
+        col1, col2 = st.columns(2)
+        with col1:
+            cb, inp = st.columns([1, 30])
+            cb.write(" ")  # spacer for alignment
+            cb.write(" ")
+            cb.checkbox(" ", key='keep_num_fusions', label_visibility='collapsed')
+            inp.number_input("Fusions (1,5,10,15)", min_value=0, key='num_fusions')
+            cb, inp = st.columns([1, 30])
+            cb.write(" ")
+            cb.write(" ")
+            cb.checkbox(" ", key='keep_num_magics', label_visibility="collapsed")
+            inp.number_input("Magics (1,4,7,10)", min_value=0, key='num_magics')
+            cb, inp = st.columns([1, 30])
+            cb.write(" ")
+            cb.write(" ")
+            cb.checkbox(" ", key='keep_num_equips', label_visibility="collapsed")
+            inp.number_input("Equips (1,5,10,15)", min_value=0, key='num_equips')
+            cb, inp = st.columns([1, 30])
+            cb.write(" ")
+            cb.write(" ")
+            cb.checkbox(" ", key='keep_num_cards_left', label_visibility="collapsed")
+            inp.number_input("Cards left in your deck [complement of cards used] (31,27,7,3)", min_value=0, key='num_cards_left')
+            cb, inp = st.columns([1, 30])
+            cb.write(" ")
+            cb.write(" ")
+            cb.checkbox(" ", key='keep_num_facedowns', label_visibility="collapsed")
+            inp.number_input("Facedowns (1,11,21,31)", min_value=0, key='num_facedowns')
+        with col2:
+            cb, inp = st.columns([1, 30])
+            cb.write(" ")
+            cb.write(" ")
+            cb.checkbox(" ", key='keep_num_traps', label_visibility="collapsed")
+            inp.number_input("Traps (1,3,5,7)", min_value=0, key='num_traps')
+            cb, inp = st.columns([1, 30])
+            cb.write(" ")
+            cb.write(" ")
+            cb.checkbox(" ", key='keep_remaining_lp', label_visibility="collapsed")
+            inp.selectbox("Remaining Life Points",options=['8000','7000 - 7999','1000 - 6999','100 - 999','< 100'],key='remaining_lp')
+            cb, inp = st.columns([1, 30])
+            cb.write(" ")
+            cb.write(" ")
+            cb.checkbox(" ", key='keep_num_opp_cards_left', label_visibility="collapsed")
+            inp.number_input("Opponent cards left [complement of num of turns] (31,27,7,3)", min_value=0, key='num_opp_cards_left') # 9 turns equal 27 cards left in opp deck
+            cb, inp = st.columns([1, 30])
+            cb.write(" ")
+            cb.write(" ")
+            cb.checkbox(" ", key='keep_num_defensive_wins', label_visibility="collapsed")
+            inp.number_input("Defensive wins (2,6,10,15) ", min_value=0, key='num_defensive_wins')
+            cb, inp = st.columns([1, 30])
+            cb.write(" ")
+            cb.write(" ")
+            cb.checkbox(" ", key='keep_num_effectives', label_visibility="collapsed")
+            inp.number_input("Effective attacks (2,4,10,20) ", min_value=0, key='num_effectives')
+
+        
+        if st.form_submit_button("Recalculate Duel Rank"):
+            duel_rank_points, duel_rank = calculate_duel_rank(
+                st.session_state['num_fusions'],
+                st.session_state['num_effectives'],
+                st.session_state['num_facedowns'],
+                st.session_state['num_magics'],
+                st.session_state['num_equips'],
+                st.session_state['num_traps'],
+                40 - st.session_state['num_cards_left'], #To Do: verify this is a correct way to calculate used cards
+                36 - st.session_state['num_opp_cards_left'], #To Do: verify this is a correct way to calculate number of turns
+                st.session_state['num_defensive_wins'],
+                st.session_state['remaining_lp']
+            )
+            st.write("Duel Rank Points:", duel_rank_points)
+            st.write("Duel Rank:", duel_rank)
 
 # Section 6
 with st.expander("Last Turn"):
@@ -419,9 +488,6 @@ with st.expander("Last Turn"):
                 if selected_card:
                     last_hand_card_ids.append(int(selected_card.split(":")[0]))
             hand = get_card_data_from_card_ids(last_hand_card_ids)
-            
-            #Field Cards
-            
             
             col1,col2,col3 = st.columns(3)
             opp_remaining_cards = col1.number_input(label = "Num of Cards Remaining in Opponent's deck",min_value = 0, max_value = 35, key = 'last_turn_remaining_opp_cards')

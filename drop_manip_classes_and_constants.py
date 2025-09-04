@@ -24,6 +24,12 @@ class Event:
     return "event_id: {},\tname: {},\tfixed: {},\tseed_advancements: {}".format(self.event_id, self.name, self.fixed, self.seed_advancements)
 
 
+class Action:
+  def __init__(self, action_id, name):
+    self.action_id = action_id
+    self.name = name
+    
+
 class Constants:
   fusion_combinations = [
   [0], [1], [2], [3], [4], 
@@ -75,21 +81,14 @@ class Constants:
   [39, 'Duel Master K',15]
   ]
 
-  #actions = []  
-  #actions.append({ID: 1, Name: 'Direct >= 1000', Events: [3]})
-  #actions.append({ID: 2, Name: 'Direct < 1000', Events: [4]})
-  #actions.append({ID: 3, Name: 'Destroy DEF', Events: [17,1]})
-  #actions.append({ID: 4, Name: 'Destroy ATK >= 1000', Events: [15,1]})
-  #actions.append({ID: 4, Name: 'Destroy ATK < 1000', Events: [16,1]})
-  #actions.append({ID: 5, Name: 'Dump', Events: [5]})
-  #actions.append({ID: 6, Name: 'Equip', Events: [8]})
-  #actions.append({ID: 7, Name: 'Field Mount', Events: [9]})
-  #actions.append({ID: 8, Name: 'Field Yami', Events: [11]})
-  #actions.append({ID: 9, Name: 'Field Other', Events: [10]})  
-  #actions.append({ID: 10, Name: 'Fusion', Events: [12]})
-  #actions.append({ID: 11, Name: 'GS Anim', Events: [13]})
-  #actions.append({ID: 12, Name: 'Trap Triggered', Events: [18]})
-  #actions.append({ID: 13, Name: 'Lose Attack', Events: [19]})
+  actions = []  
+  actions.append(Action(1, 'Dump'))
+  actions.append(Action(2, 'Fusion'))
+  actions.append(Action(4, 'Attack Card'))
+  actions.append(Action(5, 'Attack LP'))
+  actions.append(Action(6, 'Equip'))
+  actions.append(Action(7, 'Change Field'))
+  actions.append(Action(8, 'Trap Triggered'))
 
   #'attack card
   #field card
