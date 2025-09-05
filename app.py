@@ -51,8 +51,9 @@ with st.expander("1 Your Deck"):
         localS.setItem('player_deck_input', player_card_ids_in_deck_input)
 
 
-if st.button('Reset duel',key="reset_duel"):
+if st.button('Reset duel',key="reset_duel"):    
     #section 2 Identify the seed
+    #st.session_state['initial_seed'] = None
     st.session_state['num_player_cards_used_to_identify_seed'] = 5
     st.session_state['num_opponent_cards_used_to_identify_seed'] = 0
     st.session_state['opponent_card_0'] = None
@@ -101,6 +102,8 @@ with st.expander("2 Identify the seed"):
         st.session_state['first_card_index_in_opp_deck_with_multiple_options'] = None  
     if 'list_of_possible_opp_decks' not in st.session_state:
         st.session_state['list_of_possible_opp_decks'] = []
+    #if 'initial_seed' not in st.session_state:
+    #    st.session_state['initial_seed'] = None
         
     combined_opp_deck = []    
     combined_player_deck = []     
@@ -111,7 +114,7 @@ with st.expander("2 Identify the seed"):
         duel_option = st.selectbox(label = 'Select where duel is taking place',options=['Free duel','Campaign'],key='duel_option')
         no_field_type = True if duel_option == 'Free duel' else False
     if opponent_name != "Duel Master K":
-        opp_pool = read_pool(opponent_name, 'Deck')
+        opp_pool = st_read_pool(opponent_name, 'Deck')
         opp_pool_cards = get_card_data_from_card_ids(sorted(set(opp_pool)))    
     else:
         opp_pool = None # Duel master K uses the players deck
@@ -187,11 +190,9 @@ with st.expander("2 Identify the seed"):
                     possible_seed_indexes.remove(possible_seed_index)
                     break
         
-        
-
     if len(possible_seed_indexes)==0 and len(selected_player_cards)>=5:
         st.write(':red[No possible seed indexes found with that shuffling order. Review your card selection. Remember to reset your console before each duel]')
-    if len(possible_seed_indexes)>1:        
+    if len(possible_seed_indexes)>=1:        
         st.session_state['list_of_possible_opp_decks'] = []
         st.session_state['list_of_possible_player_decks'] = []
         # Iterate over all possible seed indexes and save all possible opponent decks
@@ -217,8 +218,9 @@ with st.expander("2 Identify the seed"):
             cards_at_position = get_card_data_from_card_ids(ids_at_position)
             combined_opp_deck.append({'Pos': i+1, 'Card':"  |  ".join(f"{card.cardID}: {card.name} ({card.attack}/{card.defense}) {card.guardian_star} " for card in cards_at_position)})  # Concatenate cards with '|'
 
-        st.write(f'First card position with multiple options for Player: {st.session_state['first_card_index_in_player_deck_with_multiple_options']}, and Opponent: {st.session_state['first_card_index_in_opp_deck_with_multiple_options']}')
-        st.write('No. of possible seed indexes: ',len(possible_seed_indexes),'add more player or opponent cards to identify the initial seed index uniquely')
+        if len(possible_seed_indexes)>1:
+            st.write(f'First card position with multiple options for Player: {st.session_state['first_card_index_in_player_deck_with_multiple_options']}, and Opponent: {st.session_state['first_card_index_in_opp_deck_with_multiple_options']}')
+            st.write('No. of possible seed indexes: ',len(possible_seed_indexes),'add more player or opponent cards to identify the initial seed index uniquely')
     initial_seed_index = None
     if possible_seed_indexes is not None and len(possible_seed_indexes)==1:
         initial_seed_index = possible_seed_indexes[0]
@@ -239,7 +241,8 @@ with st.expander("3: Player and Opponent Deck (informational, no action needed)"
         st.dataframe(combined_opp_deck,hide_index = True, column_config={"Pos": st.column_config.TextColumn(width=1),"Card": st.column_config.TextColumn(width=900)})
 
     if initial_seed_index is not None:  # Initial seed index identified
-        setup_load_db_to_memory(initial_seed_index) # load dbs to memory with variable anim steps for the identified initial seed index
+        setup_load_db_to_memory_st(initial_seed_index) # load dbs to memory with variable anim steps for the identified initial seed index
+        #st.session_state['initial_seed'] = initial_seed_index
         (poss_opp_deck, _) = create_opponent_deck(opp_pool, initial_seed_index,opponent_name,player_card_ids_in_deck)
         opp_cards_to_play_order = generate_opponents_cards_to_play_order(opponent_id, poss_opp_deck, no_field_type)
         player_deck_shuffled = create_player_deck(player_card_ids_in_deck, initial_seed_index)
@@ -521,8 +524,8 @@ with st.expander("Last Turn"):
     if initial_seed_index is None:
         st.write('Identify initial seed index first, and then use this section for the last turn')
     
-    if initial_seed_index is not None:
-        # Field cards are outside the st.form because the guardian star dropdown depends on the selection of the card
+    if initial_seed_index is not None or 1==1:
+
         for i in range(4):
             col1, col2, col3 = st.columns(3)
             selected_card_input = col1.selectbox(label = f'Field card {i + 1}',options=[f"{card['Id']}: {card['Name']}" for card in Constants.card_data if card['Type'] < 20], key=f"player_last_turn_field_card_{i}",index=None)
@@ -535,65 +538,63 @@ with st.expander("Last Turn"):
                 my_cards_in_field.append(card)
         
 
-        with st.form("last_turn_form",enter_to_submit=False,border=False):
-            st.write('Your Hand')
-            columns_last_turn_player_hand = st.columns(5)
-            last_hand_card_ids = []
-            for i in range(5):
-                selected_card = columns_last_turn_player_hand[i].selectbox(label = ' ',label_visibility='collapsed', options=[f"{card.cardID}: {card.name}" for card in player_deck], key=f"player_last_turn_card_{i}",index=None,placeholder=f'Card {i + 1}')
-                if selected_card:
-                    last_hand_card_ids.append(int(selected_card.split(":")[0]))
-            hand = get_card_data_from_card_ids(last_hand_card_ids)
+        #with st.form("last_turn_form",enter_to_submit=False,border=False):
+        st.write('Your Hand')
+        columns_last_turn_player_hand = st.columns(5)
+        last_hand_card_ids = []
+        for i in range(5):
+            selected_card = columns_last_turn_player_hand[i].selectbox(label = ' ',label_visibility='collapsed', options=[f"{card.cardID}: {card.name}" for card in player_deck], key=f"player_last_turn_card_{i}",index=None,placeholder=f'Card {i + 1}')
+            if selected_card:
+                last_hand_card_ids.append(int(selected_card.split(":")[0]))
+        hand = get_card_data_from_card_ids(last_hand_card_ids)
+        
+        col1,col2,col3,col4,col5 = st.columns(5)
+        opp_remaining_cards = col1.number_input(label = "No. of Cards in Opponent's deck",min_value = 0, max_value = 35, key = 'last_turn_remaining_opp_cards')
+        enemy_card =   [card for card in opp_cards_to_play_order  if card.cards_left_in_opp_deck == opp_remaining_cards][0] if opp_remaining_cards > 0 else None
+        enemy_card_position_input = col2.selectbox("Opponent's Card Position",options=["Defense","Attack"],key="is_enemy_card_in_atk")
+        is_enemy_card_in_atk = True if enemy_card_position_input == "Attack" else False
+        remaining_enemy_LP = col3.number_input("Opponent remaining Life Points:",min_value = 0, max_value = 8000,key='last_turn_remaining_lp')
+        field_type = col4.selectbox("Field Type", options=[x[1] for x in Constants.field_types], key="last_turn_field_type")
+        field_type_id = [x[0] for x in Constants.field_types if x[1] == field_type][0]
+        battle_rank = col5.selectbox("Select the duel battle rank:", options=['SAPow','BCD','SATec'])
+        enemy_drop_pool = st_read_pool(opponent_name, battle_rank)
+        enemy_drop_pool_card_ids = list(set(enemy_drop_pool)) # Unique card IDs in the drop pool
+        enemy_drop_pool_card_ids.sort()
+        enemy_drop_pool_cards = get_card_data_from_card_ids(enemy_drop_pool_card_ids)
+        desired_drop_cards = st.multiselect("Desired cards:",[f"{card.cardID}: {card.name}" for card in enemy_drop_pool_cards],key='last_turn_desired_drop_cards')
+
+        
+        search = st.button("Search")
+
+        if search and (remaining_enemy_LP == 0 or not enemy_card or len(desired_drop_cards) == 0 or len(hand) < 5):
+            st.warning("Please provide all required information.")
             
-            col1,col2,col3 = st.columns(3)
-            opp_remaining_cards = col1.number_input(label = "Num of Cards Remaining in Opponent's deck",min_value = 0, max_value = 35, key = 'last_turn_remaining_opp_cards')
-            enemy_card =   [card for card in opp_cards_to_play_order  if card.cards_left_in_opp_deck == opp_remaining_cards][0] if opp_remaining_cards > 0 else None
-            enemy_card_position_input = col2.selectbox("Opponent's Card Position",options=["Defense","Attack"],key="is_enemy_card_in_atk")
-            is_enemy_card_in_atk = True if enemy_card_position_input == "Attack" else False
-            remaining_enemy_LP = col3.number_input("Opponent remaining Life Points:",min_value = 0, max_value = 8000,key='last_turn_remaining_lp')
-            
-            col1, col2 = st.columns(2)
-            battle_rank = col1.selectbox("Select the duel battle rank:", options=['SAPow','BCD','SATec'])
-            field_type = col2.selectbox("Field Type", options=[x[1] for x in Constants.field_types], key="last_turn_field_type")
-            field_type_id = [x[0] for x in Constants.field_types if x[1] == field_type][0]
-            
 
-            enemy_drop_pool = read_pool(opponent_name, battle_rank)
-            enemy_drop_pool_card_ids = list(set(enemy_drop_pool)) # Unique card IDs in the drop pool
-            enemy_drop_pool_card_ids.sort()
-            enemy_drop_pool_cards = get_card_data_from_card_ids(enemy_drop_pool_card_ids)
-            desired_drop_cards = st.multiselect("Desired cards:",[f"{card.cardID}: {card.name}" for card in enemy_drop_pool_cards],key='last_turn_desired_drop_cards')
-            search = st.form_submit_button("Search")
-
-            if search and (remaining_enemy_LP == 0 or not enemy_card or len(desired_drop_cards) == 0 or len(hand) < 5):
-                st.warning("Please provide all required information.")
-                
-
-            if search and remaining_enemy_LP > 0 and len(desired_drop_cards) > 0 and enemy_card and len(hand) == 5:
-                seed_index_at_start_of_last_turn = event_history[-1].new_seed_index
-                main_phase_actions = generate_main_phase_actions(hand,my_cards_in_field,seed_index_at_start_of_last_turn,field_type_id,enemy_card)
-                st.write(len(main_phase_actions), " possible Main Phase actions")
-                plays = []
-                search_start_time = datetime.now()
-                found_drop = False
-                attack_types = ['Normal','Quick3D','SPAWN_3D']
-                for attack_type in attack_types: 
-                    if not found_drop:
-                        for main_phase_action in main_phase_actions:
-                            if not found_drop:
-                                possible_battle_phase_actions = generate_attack_combinations_from_cards_in_field(enemy_card,remaining_enemy_LP,main_phase_action,is_enemy_card_in_atk,attack_type)
-                                for battle_phase_actions in possible_battle_phase_actions:
-                                    play = Play(seed_index_at_start_of_last_turn)
-                                    play.main_phase_action = main_phase_action
-                                    play.battle_phase_actions = battle_phase_actions    
-                                    play.calculate_drop(enemy_drop_pool)
-                                    if int(play.drop_card.cardID) in list(map(lambda x: int(x.split(":")[0]),desired_drop_cards)):
-                                        st.write("Found a way to get the desired drop!")
-                                        found_drop = True
-                                        break
-
+        if search and remaining_enemy_LP > 0 and len(desired_drop_cards) > 0 and enemy_card and len(hand) == 5:
+            seed_index_at_start_of_last_turn = event_history[-1].new_seed_index
+            main_phase_actions = generate_main_phase_actions(hand,my_cards_in_field,seed_index_at_start_of_last_turn,field_type_id,enemy_card)
+            st.write(len(main_phase_actions), " possible Main Phase actions")
+            plays = []
+            search_start_time = datetime.now()
+            found_drop = False
+            attack_types = ['Normal','Quick3D','SPAWN_3D']
+            for attack_type in attack_types: 
                 if not found_drop:
-                    st.write("No possible actions found to get the desired drop. Destroy enemy card and try again next turn.")
-                else: 
-                    st.write(play)
+                    for main_phase_action in main_phase_actions:
+                        if not found_drop:
+                            possible_battle_phase_actions = generate_attack_combinations_from_cards_in_field(enemy_card,remaining_enemy_LP,main_phase_action,is_enemy_card_in_atk,attack_type)
+                            for battle_phase_actions in possible_battle_phase_actions:
+                                play = Play(seed_index_at_start_of_last_turn)
+                                play.main_phase_action = main_phase_action
+                                play.battle_phase_actions = battle_phase_actions    
+                                play.calculate_drop(enemy_drop_pool)
+                                if int(play.drop_card.cardID) in list(map(lambda x: int(x.split(":")[0]),desired_drop_cards)):
+                                    st.write("Found a way to get the desired drop!")
+                                    found_drop = True
+                                    break
+
+            if not found_drop:
+                st.write("No possible actions found to get the desired drop. Destroy enemy card and try again next turn.")
+            else: 
+                st.write(play)
 

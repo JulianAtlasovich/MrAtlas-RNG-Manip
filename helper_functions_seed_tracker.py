@@ -6,8 +6,10 @@ from db_queries import *
 import copy
 from itertools import permutations
 from datetime import datetime
+import streamlit as st
 
-def setup_load_db_to_memory(seed_index):
+@st.cache_data(ttl=600)
+def setup_load_db_to_memory_st(seed_index):
   Constants.load_dbs_to_memory(seed_index) # for performance reasons load dbs to memory only once
 
 def get_opponent_name_by_id(opponent_id):
@@ -243,35 +245,6 @@ def find_fusion(card1,card2):
     # To be implemented: fusion with magic/trap cards
     return card1,fusion_succeded
 
-a = """ 
-def generate_first_main_phase_action(hand,initial_seed_index,opp_pool):
-  (best_card, best_fusion_combination, count_fusions, count_dumps,new_hand) = get_best_fusion(hand)
-  seed_adv_fusion = next(event.seed_advancements for event in Constants.events if event.name == "FUSION")
-  seed_adv_dump = next(event.seed_advancements for event in Constants.events if event.name == "DUMP")
-  seed_index_delta = count_fusions * seed_adv_fusion + count_dumps * seed_adv_dump
-  main_phase_action = Main_phase_action(best_card,seed_index_delta,'Select cards: ' +  str(best_fusion_combination),'FUSE' if count_fusions>0 else 'SUMMON', new_hand)
-
-  # add deck shuffling event at the start of the first main phase action
-  shuffling_event = next((event for event in Constants.events if event.name == 'INITIAL_DECKS_SHUFFLING'), None)
-  if initial_seed_index is not None:
-    shuffling_event.initial_seed_index = initial_seed_index
-    (_, new_seed_index) = create_opponent_deck(opp_pool, initial_seed_index)  # just to advance the seed internally
-    shuffling_event.new_seed_index = new_seed_index  
-  main_phase_action.events.append(shuffling_event)
-
-  # add fusion and dump events
-  for _ in range(count_fusions):
-    fusion_event = next((event for event in Constants.events if event.name == 'FUSION'), None)
-    fusion_event.initial_seed_index = main_phase_action.events[-1].new_seed_index or 0
-    fusion_event.new_seed_index = fusion_event.initial_seed_index + fusion_event.seed_advancements    
-    main_phase_action.events.append(fusion_event)
-  for _ in range(count_dumps):
-    dump_event = next((event for event in Constants.events if event.name == 'DUMP'), None)
-    dump_event.initial_seed_index = main_phase_action.events[-1].new_seed_index or 0
-    dump_event.new_seed_index = dump_event.initial_seed_index + dump_event.seed_advancements
-    main_phase_action.events.append(dump_event)
-  
-  return main_phase_action """
 
 def add_equips(card,number_of_equips):
   result = copy.deepcopy(card)
@@ -720,8 +693,10 @@ def calculate_duel_rank(num_fusions,num_effectives,num_facedowns,num_magics,num_
       duel_rank = "SA Tech"
   return (duel_rank_points,duel_rank)
   
-  
-
+#### FRONT END FUNCTIONS ####
+@st.cache_data
+def st_read_pool(opponent_name, battle_rank):
+  return read_pool(opponent_name, battle_rank)
 
   
      

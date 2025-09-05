@@ -1,6 +1,5 @@
 TODOs
 must:
-- making event tracking simpler by combining events
 
 
 nice to have:
@@ -23,3 +22,4 @@ DONE
 ---
 - seed identification section dropdows are now only populated with possible options of cards after 5th
 - separated player cards into groups of 5 in seed identification section
+- making event tracking simpler by combining events
