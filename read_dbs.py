@@ -36,6 +36,7 @@ class PoolType(Enum):
 
 
 def read_pool(opp_name, pool_type):
+    print(datetime.now(),"Loading opponent pool...")
     conn = sqlite3.connect('FmDatabaseWithGS.db')
     c = conn.cursor()
 
@@ -79,6 +80,7 @@ class AnimType(Enum):
 
 
 def get_anim_data():
+    print(datetime.now(),"Loading animation data...")
     fixed_advs = {}
     vary_advs = {}
 
@@ -107,6 +109,7 @@ def get_anim_data():
 
 
 def get_ai_sorts():
+    print(datetime.now(),"Loading AI sorts...")
     conn = sqlite3.connect('FmDatabase.db')
     c = conn.cursor()
 
@@ -118,6 +121,7 @@ def get_ai_sorts():
 
 
 def get_card_names():
+    print(datetime.now(),"Loading card names...")
     conn = sqlite3.connect('FmDatabase.db')
     c = conn.cursor()
 
@@ -129,6 +133,7 @@ def get_card_names():
 
 
 def get_possible_seed_index_by_order(order):
+    print(datetime.now(),"Loading possible seed indexes by order...",order)
     conn = sqlite3.connect('FmDatabase.db')
     c = conn.cursor()
 

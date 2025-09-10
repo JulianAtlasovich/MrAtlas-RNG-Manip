@@ -6,11 +6,13 @@ from helper_functions_seed_tracker import *
 from db_queries import *
 from datetime import datetime
 from streamlit_local_storage import LocalStorage
+#import ptvsd
 
 st.set_page_config(layout="wide")
 st.title("The Atlas of RNG Manipulation for Yu-Gi-Oh! Forbidden Memories")
 localS = LocalStorage()
-
+#ptvsd.enable_attach(address=('localhost', 5678), redirect_output=True)
+#ptvsd.wait_for_attach()
 # Search Bar
 with st.expander("Tool Guide"):
     st.info("""
@@ -89,10 +91,10 @@ if st.button('Reset duel',key="reset_duel"):
 
 # Section 2
 with st.expander("2 Identify the seed"):
-    duelists = get_list_of_opponent_names()
-    
+    duelists = get_list_of_opponent_names_st()
     opponent_name = st.selectbox("Select the opponent:",options=duelists)
     opponent_id = get_opponent_id_by_name(opponent_name)
+    initial_seed_index = None
     
     if 'first_card_index_in_player_deck_with_multiple_options' not in st.session_state:
         st.session_state['first_card_index_in_player_deck_with_multiple_options'] = None  
@@ -103,8 +105,6 @@ with st.expander("2 Identify the seed"):
     if 'list_of_possible_opp_decks' not in st.session_state:
         st.session_state['list_of_possible_opp_decks'] = []
     #if 'initial_seed' not in st.session_state:
-    #    st.session_state['initial_seed'] = None
-        
     combined_opp_deck = []    
     combined_player_deck = []     
     possible_seed_indexes = []
@@ -221,7 +221,7 @@ with st.expander("2 Identify the seed"):
         if len(possible_seed_indexes)>1:
             st.write(f'First card position with multiple options for Player: {st.session_state['first_card_index_in_player_deck_with_multiple_options']}, and Opponent: {st.session_state['first_card_index_in_opp_deck_with_multiple_options']}')
             st.write('No. of possible seed indexes: ',len(possible_seed_indexes),'add more player or opponent cards to identify the initial seed index uniquely')
-    initial_seed_index = None
+    
     if possible_seed_indexes is not None and len(possible_seed_indexes)==1:
         initial_seed_index = possible_seed_indexes[0]
         st.write('initial seed index: ',initial_seed_index)
@@ -235,12 +235,13 @@ with st.expander("3: Player and Opponent Deck (informational, no action needed)"
     if possible_seed_indexes is not None and len(possible_seed_indexes) > 1:  # Initial seed index not yet identified, multiple options
         st.write('Add more cards to uniquely identify the initial seed index, possible cards at each position will be displayed below.')
         
-        st.write("Possible Player cards at each position (IDs separated by '|'):")
-        st.dataframe(combined_player_deck,hide_index = True, column_config={"Pos": st.column_config.TextColumn(width=1),"Card": st.column_config.TextColumn(width=900)})
-        st.write("Possible Opponent cards at each position (IDs separated by '|'):")
-        st.dataframe(combined_opp_deck,hide_index = True, column_config={"Pos": st.column_config.TextColumn(width=1),"Card": st.column_config.TextColumn(width=900)})
+        with st.expander("Possible Player cards at each position (IDs separated by '|')"):
+            st.dataframe(combined_player_deck,hide_index = True, column_config={"Pos": st.column_config.TextColumn(width=1),"Card": st.column_config.TextColumn(width=900)})
+        with st.expander("Possible Opponent cards at each position (IDs separated by '|')"):
+            st.dataframe(combined_opp_deck,hide_index = True, column_config={"Pos": st.column_config.TextColumn(width=1),"Card": st.column_config.TextColumn(width=900)})
 
     if initial_seed_index is not None:  # Initial seed index identified
+        st.write('setup_load_db_to_memory_st',initial_seed_index)
         setup_load_db_to_memory_st(initial_seed_index) # load dbs to memory with variable anim steps for the identified initial seed index
         #st.session_state['initial_seed'] = initial_seed_index
         (poss_opp_deck, _) = create_opponent_deck(opp_pool, initial_seed_index,opponent_name,player_card_ids_in_deck)
@@ -524,13 +525,13 @@ with st.expander("Last Turn"):
     if initial_seed_index is None:
         st.write('Identify initial seed index first, and then use this section for the last turn')
     
-    if initial_seed_index is not None or 1==1:
+    if initial_seed_index is not None:
 
         for i in range(4):
             col1, col2, col3 = st.columns(3)
             selected_card_input = col1.selectbox(label = f'Field card {i + 1}',options=[f"{card['Id']}: {card['Name']}" for card in Constants.card_data if card['Type'] < 20], key=f"player_last_turn_field_card_{i}",index=None)
             if selected_card_input:
-                num_equips = col3.number_input(f" Number of equips applied (Megamorph counts as 2)",min_value=0, max_value=10, key=f"eq_{i}")
+                num_equips = col3.number_input(f" Number of equips applied (Megamorph adds 2)",min_value=0, max_value=10, key=f"eq_{i}")
                 card = get_card_data_from_card_ids([int(selected_card_input.split(":")[0])])[0]
                 guardian_star = col2.selectbox(f"Guardian Star for {card.name}", options=card.guardian_stars, key=f"gs_{i}")
                 card.guardian_star = guardian_star
@@ -549,11 +550,11 @@ with st.expander("Last Turn"):
         hand = get_card_data_from_card_ids(last_hand_card_ids)
         
         col1,col2,col3,col4,col5 = st.columns(5)
-        opp_remaining_cards = col1.number_input(label = "No. of Cards in Opponent's deck",min_value = 0, max_value = 35, key = 'last_turn_remaining_opp_cards')
+        opp_remaining_cards = col1.number_input(label = "Cards left in Opp's deck",min_value = 0, max_value = 35, key = 'last_turn_remaining_opp_cards')
         enemy_card =   [card for card in opp_cards_to_play_order  if card.cards_left_in_opp_deck == opp_remaining_cards][0] if opp_remaining_cards > 0 else None
         enemy_card_position_input = col2.selectbox("Opponent's Card Position",options=["Defense","Attack"],key="is_enemy_card_in_atk")
         is_enemy_card_in_atk = True if enemy_card_position_input == "Attack" else False
-        remaining_enemy_LP = col3.number_input("Opponent remaining Life Points:",min_value = 0, max_value = 8000,key='last_turn_remaining_lp')
+        remaining_enemy_LP = col3.number_input("Opp remaining Life Points:",min_value = 0, max_value = 8000,key='last_turn_remaining_lp')
         field_type = col4.selectbox("Field Type", options=[x[1] for x in Constants.field_types], key="last_turn_field_type")
         field_type_id = [x[0] for x in Constants.field_types if x[1] == field_type][0]
         battle_rank = col5.selectbox("Select the duel battle rank:", options=['SAPow','BCD','SATec'])
@@ -586,9 +587,10 @@ with st.expander("Last Turn"):
                             for battle_phase_actions in possible_battle_phase_actions:
                                 play = Play(seed_index_at_start_of_last_turn)
                                 play.main_phase_action = main_phase_action
-                                play.battle_phase_actions = battle_phase_actions    
+                                play.battle_phase_actions = battle_phase_actions                                   
                                 play.calculate_drop(enemy_drop_pool)
                                 if int(play.drop_card.cardID) in list(map(lambda x: int(x.split(":")[0]),desired_drop_cards)):
+                                    #st.write([str(x) for x in play.battle_phase_actions]) 
                                     st.write("Found a way to get the desired drop!")
                                     found_drop = True
                                     break

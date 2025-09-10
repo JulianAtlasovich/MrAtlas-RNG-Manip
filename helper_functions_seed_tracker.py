@@ -1,4 +1,3 @@
-import sqlite3
 from read_dbs import *
 from rng_core import *
 from drop_manip_classes_and_constants import *
@@ -11,6 +10,14 @@ import streamlit as st
 @st.cache_data(ttl=600)
 def setup_load_db_to_memory_st(seed_index):
   Constants.load_dbs_to_memory(seed_index) # for performance reasons load dbs to memory only once
+
+@st.cache_data()
+def get_list_of_opponent_names_st(): # to cache opponent names
+  return get_list_of_opponent_names()
+
+@st.cache_data(ttl=600)
+def get_possible_seed_index_by_order_st(order):
+  return get_possible_seed_index_by_order(order)
 
 def get_opponent_name_by_id(opponent_id):
   return Constants.opponents[opponent_id-1][1]
@@ -159,7 +166,7 @@ def get_initial_possible_seeds(my_deck,hand):
   for i in range(len(hand)):
     card_pos = get_index_positions(my_deck,hand[i])
     order.append(card_pos)
-  possible_seed_indexes = get_possible_seed_index_by_order(order)
+  possible_seed_indexes = get_possible_seed_index_by_order_st(order)
   return possible_seed_indexes
 
 ### new stuff ###
@@ -547,9 +554,10 @@ def create_attack_combination(attack_order,my_cards,enemy_card,attack_order_seed
   attack_combination = []
   enemy_card_destroyed = False
   for card_index in attack_order:
+    print('Enemy LP before attack: {}'.format(enemy_LP))
     if enemy_LP <= 0:
       break
-  
+
     my_card = my_cards[card_index]
     if not enemy_card_destroyed:
       new_battle_phase_action = create_action_from_my_card_attack_to_enemy_card(card_index,my_card,enemy_card,attack_order_seed,is_enemy_card_in_atk,attack_type)
@@ -560,7 +568,6 @@ def create_attack_combination(attack_order,my_cards,enemy_card,attack_order_seed
       new_battle_phase_action = create_action_from_my_card_attack_to_enemy_LP(card_index,my_card,attack_order_seed)       
       enemy_LP -= my_card.attack
     attack_order_seed += new_battle_phase_action.seed_index_delta
-    #TODO create a class called Attack_combination that has a specific seed index delta, and only add to the list the attack combinations that are not in that list already
     attack_combination.append(new_battle_phase_action)
   is_enemy_dead = enemy_LP<=0
   return is_enemy_dead,attack_combination
