@@ -244,7 +244,7 @@ with st.expander("3: Player and Opponent Deck (informational, no action needed)"
     if initial_seed_index is not None:  # Initial seed index identified
         st.write('setup_load_db_to_memory_st',initial_seed_index)
         setup_load_db_to_memory_st(initial_seed_index) # load dbs to memory with variable anim steps for the identified initial seed index
-        Constants.load_dbs_to_memory( initial_seed_index)
+        #Constants.load_dbs_to_memory( initial_seed_index)
         #st.session_state['initial_seed'] = initial_seed_index
         (poss_opp_deck, _) = create_opponent_deck(opp_pool, initial_seed_index,opponent_name,player_card_ids_in_deck)
         opp_cards_to_play_order = generate_opponents_cards_to_play_order(opponent_id, poss_opp_deck, no_field_type)
