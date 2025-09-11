@@ -347,6 +347,49 @@ def make_best_fusion_from_hand(hand_ids):
   else:
     return 'Fuse cards {} to get result {}'.format([hand[i].name for i in best_fusion_combination], best_card.name)
 
+def generate_main_phase_action_pair_with_field_card(field_card_index,selected_field_card,hand,fusion_combination,field_type,enemy_card):
+  main_phase_action_pair = []
+  
+  for guardian_star_option in range(2): ## TEMP change to 2
+    #### temp testing
+    #if guardian_star_option == 0:
+    #  continue
+    #####
+    seed_index_delta = 0
+    card_to_play = selected_field_card
+    for card_index in fusion_combination:        
+      (fusion_result,fusion_succeded) = find_fusion(card_to_play,hand[card_index])       
+      if fusion_succeded:
+        card_to_play = fusion_result
+        seed_index_delta += Constants.anims_steps_adv['FUSION']
+      
+      elif can_card_be_equipped(card_to_play,hand[card_index]):
+        card_to_play = equip_card(card_to_play,hand[card_index])
+        seed_index_delta += Constants.anims_steps_adv['EQUIP']
+
+      else:
+        card_to_play = result_from_failed_fusion(card_to_play,hand[card_index])
+        seed_index_delta += Constants.anims_steps_adv['DUMP']
+    card_to_play.guardian_star = card_to_play.guardian_stars[guardian_star_option]
+    description  = 'Fuse cards in position {}. Place on top of field card {} ({}) \nResult "{}" in GS {} "{}"'.format([x+1 for x in fusion_combination],field_card_index+1,selected_field_card.name,card_to_play.name,guardian_star_option+1,card_to_play.guardian_star)
+    action_type = 'FUSION'
+    card_to_play = apply_field_modifiers_to_card_copy(card_to_play,field_type)
+    
+    if guardian_star_option == 0 and is_card_monster_type(card_to_play):
+      has_GS_interaction = exist_guardian_star_interaction(card_to_play,enemy_card)
+      a_main_phase_action = Main_phase_action(card_to_play,seed_index_delta,description,action_type)
+      main_phase_action_pair.append(a_main_phase_action)
+    
+    # we only consider the second guardian star option if it changes the interaction with the enemy card
+    if guardian_star_option == 1 and is_card_monster_type(card_to_play):
+      new_has_GS_interaction = exist_guardian_star_interaction(card_to_play,enemy_card)
+      if new_has_GS_interaction != has_GS_interaction:
+        a_main_phase_action = Main_phase_action(card_to_play,seed_index_delta,description,action_type)
+        main_phase_action_pair.append(a_main_phase_action)
+  return main_phase_action_pair
+
+
+
 def generate_main_phase_actions(hand,my_cards_in_field,initial_seed_index,field_type,enemy_card):
   """receives a hand, returns all possible fusions"""
   main_phase_actions = []
@@ -358,6 +401,20 @@ def generate_main_phase_actions(hand,my_cards_in_field,initial_seed_index,field_
         main_phase_action.my_cards_in_field.append(main_phase_action.card_result)
         main_phase_action.seed_index = initial_seed_index + main_phase_action.seed_index_delta
         main_phase_actions.append(main_phase_action)
+
+
+  # adding section for using card on the field as the first card in the fusion
+  for field_card_index in range(len(my_cards_in_field)):
+    for fusion_combination in Constants.fusion_combinations:
+      selected_field_card = copy.deepcopy(my_cards_in_field[field_card_index])
+      #if fusion_combination == [0] and field_card_index == 0:
+      #if len(fusion_combination) == 1:
+      main_phase_action_pair = generate_main_phase_action_pair_with_field_card(field_card_index,selected_field_card,hand,fusion_combination,field_type,enemy_card)
+      for main_phase_action in main_phase_action_pair:
+        if main_phase_action is not None and main_phase_action not in main_phase_actions:
+          main_phase_action.my_cards_in_field = my_cards_in_field[:][:field_card_index] + [main_phase_action.card_result] + my_cards_in_field[:][field_card_index+1:] # we save the other cards in the field, selected one is replaced by the fusion result
+          main_phase_action.seed_index = initial_seed_index + main_phase_action.seed_index_delta
+          main_phase_actions.append(main_phase_action)      
   return main_phase_actions
 
 def generate_main_phase_action_pair(hand,fusion_combination,field_type,enemy_card):
@@ -554,7 +611,6 @@ def create_attack_combination(attack_order,my_cards,enemy_card,attack_order_seed
   attack_combination = []
   enemy_card_destroyed = False
   for card_index in attack_order:
-    print('Enemy LP before attack: {}'.format(enemy_LP))
     if enemy_LP <= 0:
       break
 
@@ -572,13 +628,16 @@ def create_attack_combination(attack_order,my_cards,enemy_card,attack_order_seed
   is_enemy_dead = enemy_LP<=0
   return is_enemy_dead,attack_combination
   
-def generate_attack_combinations_from_cards_in_field(enemy_card,remaining_enemy_LP,main_phase_action,is_enemy_card_in_atk,attack_type):
+def generate_attack_combinations_from_cards_in_field(enemy_card,remaining_enemy_LP,main_phase_action,is_enemy_card_in_atk):
+  attack_types = ['Normal','Quick3D','SPAWN_3D'] 
+  #attack_types = ['SPAWN_3D']
   attack_orders = list(permutations(range(len(main_phase_action.my_cards_in_field)))) 
   attack_combinations = []
   for i,attack_order in enumerate(attack_orders):
-    is_enemy_dead,attack_combination = create_attack_combination(attack_order,main_phase_action.my_cards_in_field,enemy_card,main_phase_action.seed_index,remaining_enemy_LP,is_enemy_card_in_atk,attack_type)
-    if is_enemy_dead:
-      attack_combinations.append(attack_combination)  
+    for attack_type in attack_types:
+      is_enemy_dead,attack_combination = create_attack_combination(attack_order,main_phase_action.my_cards_in_field,enemy_card,main_phase_action.seed_index,remaining_enemy_LP,is_enemy_card_in_atk,attack_type)
+      if is_enemy_dead:
+        attack_combinations.append(attack_combination)  
   return attack_combinations
 
 def calculate_duel_rank(num_fusions,num_effectives,num_facedowns,num_magics,num_equips,num_traps,cards_used,num_turns,num_defensive_wins,remaining_lp):

@@ -244,6 +244,7 @@ with st.expander("3: Player and Opponent Deck (informational, no action needed)"
     if initial_seed_index is not None:  # Initial seed index identified
         st.write('setup_load_db_to_memory_st',initial_seed_index)
         setup_load_db_to_memory_st(initial_seed_index) # load dbs to memory with variable anim steps for the identified initial seed index
+        Constants.load_dbs_to_memory( initial_seed_index)
         #st.session_state['initial_seed'] = initial_seed_index
         (poss_opp_deck, _) = create_opponent_deck(opp_pool, initial_seed_index,opponent_name,player_card_ids_in_deck)
         opp_cards_to_play_order = generate_opponents_cards_to_play_order(opponent_id, poss_opp_deck, no_field_type)
@@ -561,25 +562,31 @@ with st.expander("Last Turn"):
             plays = []
             search_start_time = datetime.now()
             found_drop = False
-            attack_types = ['Normal','Quick3D','SPAWN_3D']
-            for attack_type in attack_types: 
-                if not found_drop:
-                    for main_phase_action in main_phase_actions:
-                        if not found_drop:
-                            possible_battle_phase_actions = generate_attack_combinations_from_cards_in_field(enemy_card,remaining_enemy_LP,main_phase_action,is_enemy_card_in_atk,attack_type)
-                            for battle_phase_actions in possible_battle_phase_actions:
-                                play = Play(seed_index_at_start_of_last_turn)
-                                play.main_phase_action = main_phase_action
-                                play.battle_phase_actions = battle_phase_actions                                   
-                                play.calculate_drop(enemy_drop_pool)
-                                if int(play.drop_card.cardID) in list(map(lambda x: int(x.split(":")[0]),desired_drop_cards)):
-                                    #st.write([str(x) for x in play.battle_phase_actions]) 
-                                    st.write("Found a way to get the desired drop!")
-                                    found_drop = True
-                                    break
+            
+            #for attack_type in attack_types: 
+            #    if not found_drop:
+            for i,main_phase_action in enumerate(main_phase_actions):
+                
+
+                if found_drop:
+                    break
+                
+                possible_battle_phase_actions = generate_attack_combinations_from_cards_in_field(enemy_card,remaining_enemy_LP,main_phase_action,is_enemy_card_in_atk)
+                
+                for j,battle_phase_actions in enumerate(possible_battle_phase_actions):
+                    play = Play(seed_index_at_start_of_last_turn)
+                    play.main_phase_action = main_phase_action
+                    play.battle_phase_actions = battle_phase_actions                                   
+                    play.calculate_drop(enemy_drop_pool)
+                    #st.write(play)
+                    if int(play.drop_card.cardID) in list(map(lambda x: int(x.split(":")[0]),desired_drop_cards)):                                     
+                        st.write("Found a way to get the desired drop!")
+                        found_drop = True
+                        break
 
             if not found_drop:
                 st.write("No possible actions found to get the desired drop. Destroy enemy card and try again next turn.")
             else: 
+                #st.write('---')
                 st.write(play)
 

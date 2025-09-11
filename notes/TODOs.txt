@@ -7,7 +7,6 @@ nice to have:
 - making it possible to fuse with cards already in the field on the last turn
 - make so that each attack can be of any of the 3 types, instead of always using 1 type for all attacks 
 - I have never seen the second GS after the main phase action
-- verify that the seed advances correctly in case of failed atk
 
 DONE
 - add duel master k

@@ -342,8 +342,8 @@ class Main_phase_action:
     
 
   def __eq__(self, other):
-    return self.card_result.cardID == other.card_result.cardID and self.seed_index_delta == other.seed_index_delta and self.card_result.guardian_star == self.card_result.guardian_star
-  
+    return self.card_result.cardID == other.card_result.cardID and self.seed_index_delta == other.seed_index_delta and self.card_result.guardian_star == self.card_result.guardian_star and self.my_cards_in_field == other.my_cards_in_field
+
   def __str__(self):
     return "current_seed_index: {}, seed_index_delta: {},card result: {},description: {}\n".format(self.seed_index,self.seed_index_delta, self.card_result.name ,self.description)
 
