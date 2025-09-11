@@ -78,6 +78,7 @@ if st.button('Reset duel',key="reset_duel"):
     st.session_state['player_last_turn_field_card_0'] = None
     st.session_state['player_last_turn_field_card_1'] = None
     st.session_state['player_last_turn_field_card_2'] = None
+    st.session_state['player_last_turn_field_card_3'] = None
     for i in range(5):
         st.session_state[f'player_last_turn_card_{i}'] = None
     st.session_state['last_turn_remaining_opp_cards'] = 0
@@ -274,46 +275,26 @@ with st.expander("4: Add actions"):
         df_events = df_events[df_events["Event ID"] != 0] # Exclude the initial deck shuffling event from display
         st.dataframe(df_events, use_container_width=True,hide_index = True) """
     event_history = []
-    a = """ 
-    st.write("Add events by clicking below:")
-    if 'events_input' not in st.session_state:
-        st.session_state['events_input'] = ""
-    display_events = [event for event in Constants.events if event.event_id not in [0,6]] # Filter events to display (skip event_id 0 (deck shuffling), 6 (empty), 7 (end of duel))
-    third = (len(display_events) + 1) // 3
-    row1, row2, row3 = display_events[:third], display_events[third:2*third], display_events[2*third:]
-    cols1 = st.columns(len(row1))
-    for idx, event in enumerate(row1):
-        if cols1[idx].button(f"{event.event_id}: {event.name}", key=f"event_btn_row1_{event.event_id}"):
-            st.session_state['events_input'] += f" {event.event_id}"
-    cols2 = st.columns(len(row2))
-    for idx, event in enumerate(row2):
-        if cols2[idx].button(f"{event.event_id}: {event.name}", key=f"event_btn_row2_{event.event_id}"):
-            st.session_state['events_input'] += f" {event.event_id}"
-    cols3 = st.columns(len(row3))
-    for idx, event in enumerate(row3):
-        if cols3[idx].button(f"{event.event_id}:  {event.name}", key=f"event_btn_row3_{event.event_id}"):
-            st.session_state['events_input'] += f" {event.event_id}"
-
-    st.write('---') """
 
     for i, action in enumerate(Constants.actions):
-        col1, col2, col3, col4, col5, col6 = st.columns(6,vertical_alignment="bottom")
+        col1, col2, col3, col4, col5 = st.columns(5,vertical_alignment="bottom")
         col1.write(' ')
-        add_action = col1.button(f'Add {action.name}', key=f"action_add_btn_{action.action_id}",width ='stretch')
+        add_action = col1.button(f'{action.name}', key=f"action_add_btn_{action.action_id}",width ='stretch')
 
         if action.name in ['Attack Card','Change Field','Fusion','Equip','Trap Triggered']: #not in ["Dump","Attack LP"]:
             who_did_the_action = col2.selectbox('Who did the action?', options=['Player', 'Opponent'], key=f"action_who_{i}")
         
+        if action.name == "G. Star Anim" and add_action:
+            st.session_state['events_input'] += f" {get_event_id_by_name('GS_ANIM')}"
+
         if action.name == "Attack Card":
-            was_card_destroyed = col3.selectbox('Attacked Card destroyed?', options=['Yes', 'No'], key=f"action_attack_destroyed_{i}")
-            was_gs_anim = col4.selectbox('GS Animation?', options=['No', 'Yes'], key=f"action_gs_anim_{i}")
-            atk_card_mode = col5.selectbox('Attacked Card Mode', options=['DEF','ATK'], key=f"action_attack_type_{i}")
-            if atk_card_mode == 'ATK':
-                dmg_done = col6.selectbox('Damage done',options=['< 1000','>= 1000','0'], key=f"action_attack_damage_{i}")
+            was_card_destroyed = col3.selectbox('Attacked Card destroyed?', options=['Yes', 'No'], key=f"action_attack_destroyed_{i}")            
+            atk_card_mode = col4.selectbox('Attacked Card Mode', options=['DEF','ATK'], key=f"action_attack_type_{i}")
+            if atk_card_mode == 'ATK' or was_card_destroyed == 'No':
+                dmg_done = col5.selectbox('Damage done',options=['< 1000','>= 1000','0'], key=f"action_attack_damage_{i}")
             
             # Add events based on selections
-            if add_action:
-                st.session_state['events_input'] += f" {get_event_id_by_name('GS_ANIM')}" if was_gs_anim == 'Yes' else ''
+            if add_action:                
                 if atk_card_mode == 'ATK':
                     st.session_state['events_input'] += f" {get_event_id_by_name('LOSE_ATTACK')}" if was_card_destroyed == 'No' else ''
                     st.session_state['count_effective_attacks'] += 1 if who_did_the_action == 'Player' and was_card_destroyed == 'Yes' else 0
@@ -325,7 +306,8 @@ with st.expander("4: Add actions"):
             
                 if atk_card_mode == 'DEF':
                     if was_card_destroyed == 'No':
-                        st.session_state['events_input'] += f" {get_event_id_by_name('LOSE_ATTACK')}"                    
+                        st.session_state['events_input'] += f" {get_event_id_by_name('LOSE_ATTACK')}"
+                        st.session_state['events_input'] += f" {get_event_id_by_name('SWIPE_ATK_LOW')}" if dmg_done == '< 1000' else f" {get_event_id_by_name('SWIPE_ATK_HIGH')}" if dmg_done == '>= 1000' else ''
                     else:
                         st.session_state['events_input'] += f" {get_event_id_by_name('SWIPE_DEF')}"
                         st.session_state['events_input'] += f" {get_event_id_by_name('BURN')}"
@@ -366,6 +348,7 @@ with st.expander("4: Add actions"):
 
         if action.name == "Trap Triggered" and add_action:
             st.session_state['events_input'] += f" {get_event_id_by_name('TRAP_TRIGGERED')}"
+            st.session_state['events_input'] += f" {get_event_id_by_name('BURN')}"
             st.session_state['count_traps'] += 1 if who_did_the_action == 'Player' else 0
 
     events_input = st.text_input(" ",label_visibility='collapsed',placeholder="Use the buttons above to populate the events", key = "events_input")

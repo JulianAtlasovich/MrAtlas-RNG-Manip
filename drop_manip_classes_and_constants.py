@@ -84,6 +84,7 @@ class Constants:
   actions = []  
   actions.append(Action(1, 'Dump'))
   actions.append(Action(2, 'Fusion'))
+  actions.append(Action(3, 'G. Star Anim'))
   actions.append(Action(4, 'Attack Card'))
   actions.append(Action(5, 'Attack LP'))
   actions.append(Action(6, 'Equip'))

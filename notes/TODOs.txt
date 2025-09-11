@@ -5,7 +5,9 @@ must:
 nice to have:
 - remove all the uses of the DB FmDatabase, so it's all consolidated into one. Also check if it's being used inside any loop that could be moved to initial load_dbs
 - making it possible to fuse with cards already in the field on the last turn
-- performance improvements, more caching and minimize usage of database
+- make so that each attack can be of any of the 3 types, instead of always using 1 type for all attacks 
+- I have never seen the second GS after the main phase action
+- verify that the seed advances correctly in case of failed atk
 
 DONE
 - add duel master k
@@ -23,3 +25,4 @@ DONE
 - seed identification section dropdows are now only populated with possible options of cards after 5th
 - separated player cards into groups of 5 in seed identification section
 - making event tracking simpler by combining events
+- performance improvements, more caching and minimize usage of database
