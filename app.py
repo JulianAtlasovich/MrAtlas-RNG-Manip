@@ -9,24 +9,23 @@ from streamlit_local_storage import LocalStorage
 #import ptvsd
 
 st.set_page_config(layout="wide")
-st.title("The Atlas of RNG Manipulation for Yu-Gi-Oh! Forbidden Memories")
+st.title("""The Atlas of RNG Manipulation for YGO Forbidden Memories""")
 localS = LocalStorage()
 #ptvsd.enable_attach(address=('localhost', 5678), redirect_output=True)
 #ptvsd.wait_for_attach()
 # Search Bar
 with st.expander("Tool Guide"):
+    st.video('https://youtu.be/Wbb47rbdSRM')
     st.info("""
     This tool helps you manipulate the RNG (Random Number Generator) in Yu-Gi-Oh! Forbidden Memories.
 
     Restrictions:
     - You :red[MUST] restart your console before each duel.
-    - You must destroy every card the opponent plays on the next turn.
-    - You must leave an empty space in the field for the last turn.
-    - You must enter each duel using the default ID card sorting
+    - You must destroy every card the opponent plays on your turn.
+    - You must enter each duel using the default ID card sorting.
     - You must play all your monsters face up. (Doesn't apply to magic,traps,equips)
     - You can't use any magic card that is not a field card. No removal cards (e.g. "Dark Hole", "Raigeki", "Dragon Capture Jar")
-    - It's recommended to minimize the number of repeated cards in your deck, to identify the seed faster. Otherwise you'll need to input more cards to identify it
-    - It's recommended to have one monster with <= 999 ATK in your hand on the last turn. This increases the chances of a successful RNG manipulation.
+    - It's recommended to minimize the number of repeated cards in your deck, to identify the seed quicker. Otherwise you'll need to input more cards to identify it
     - It's recommended to have a highly fusable hand on the last turn. This increases the chances of a successful RNG manipulation.
     """)
     
@@ -308,7 +307,7 @@ with st.expander("4: Add actions"):
                 if atk_card_mode == 'DEF':
                     if was_card_destroyed == 'No':
                         st.session_state['events_input'] += f" {get_event_id_by_name('LOSE_ATTACK')}"
-                        st.session_state['events_input'] += f" {get_event_id_by_name('SWIPE_ATK_LOW')}" if dmg_done == '< 1000' else f" {get_event_id_by_name('SWIPE_ATK_HIGH')}" if dmg_done == '>= 1000' else ''
+                        st.session_state['events_input'] += f" {get_event_id_by_name('DIRECT_LOW')}" if dmg_done == '< 1000' else f" {get_event_id_by_name('DIRECT_HIGH')}" if dmg_done == '>= 1000' else ''
                     else:
                         st.session_state['events_input'] += f" {get_event_id_by_name('SWIPE_DEF')}"
                         st.session_state['events_input'] += f" {get_event_id_by_name('BURN')}"
