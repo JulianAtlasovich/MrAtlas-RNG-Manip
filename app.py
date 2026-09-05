@@ -17,6 +17,7 @@ localS = LocalStorage()
 with st.expander("Tool Guide"):
     st.video('https://youtu.be/Wbb47rbdSRM')
     st.info("""
+    v1.52
     This tool helps you manipulate the RNG (Random Number Generator) in Yu-Gi-Oh! Forbidden Memories.
 
     Restrictions:
@@ -41,7 +42,7 @@ with st.expander("1 Your Deck"):
     player_deck = []
     player_card_ids_in_deck_input = st.text_input("Enter Card IDs separated by space in ascending order:",key = 'player_deck_input',placeholder = " ".join(map(str, range(1, 41))))
     if player_card_ids_in_deck_input:
-        player_card_ids_in_deck = list(map(int,player_card_ids_in_deck_input.split(" ")))
+        player_card_ids_in_deck = list(map(int,player_card_ids_in_deck_input.strip().split(" ")))
         if len(player_card_ids_in_deck) != 40:
             st.warning("Please enter exactly 40 card IDs.")
         player_deck_df = get_cards_by_ids(player_card_ids_in_deck)
@@ -219,7 +220,7 @@ with st.expander("2 Identify the seed"):
             combined_opp_deck.append({'Pos': i+1, 'Card':"  |  ".join(f"{card.cardID}: {card.name} ({card.attack}/{card.defense}) {card.guardian_star} " for card in cards_at_position)})  # Concatenate cards with '|'
 
         if len(possible_seed_indexes)>1:
-            st.write(f'First card position with multiple options for Player: {st.session_state['first_card_index_in_player_deck_with_multiple_options']}, and Opponent: {st.session_state['first_card_index_in_opp_deck_with_multiple_options']}')
+            st.write(f"First card position with multiple options for Player: {st.session_state['first_card_index_in_player_deck_with_multiple_options']}, and Opponent: {st.session_state['first_card_index_in_opp_deck_with_multiple_options']}")
             st.write('No. of possible seed indexes: ',len(possible_seed_indexes),'add more player or opponent cards to identify the initial seed index uniquely')
     
     if possible_seed_indexes is not None and len(possible_seed_indexes)==1:
@@ -251,11 +252,11 @@ with st.expander("3: Player and Opponent Deck (informational, no action needed)"
         player_deck_shuffled = get_card_data_from_card_ids(player_deck_shuffled)
         with st.expander("Player's deck"):
             df_player_deck_shuffled = pd.DataFrame(([o.to_dict() for o in player_deck_shuffled])).drop(columns=["Guardian Star", "Cards left in Opp Deck"])
-            st.dataframe(df_player_deck_shuffled, use_container_width=True,row_height = 30,height=250,hide_index = True)
-        #st.dataframe(df_player_deck_shuffled, use_container_width=True)
+            st.dataframe(df_player_deck_shuffled, width="stretch",row_height = 30,height=250,hide_index = True)
+        
         with st.expander("Opponent's deck"):
             df_opp_cards = pd.DataFrame(([o.to_dict() for o in opp_cards_to_play_order])).drop(columns=["Guardian Stars"])
-            st.dataframe(df_opp_cards, use_container_width=True,row_height = 30,height=250,hide_index = True)
+            st.dataframe(df_opp_cards, width="stretch",row_height = 30,height=250,hide_index = True)
 
 
 # Section 4
@@ -273,7 +274,7 @@ with st.expander("4: Add actions"):
     a = """ with st.expander("List of Possible Events:"):
         df_events = pd.DataFrame([{"Event ID": event.event_id, "Name": event.name, "Seed Advancements": event.seed_advancements , "Description": event.description} for event in Constants.events])
         df_events = df_events[df_events["Event ID"] != 0] # Exclude the initial deck shuffling event from display
-        st.dataframe(df_events, use_container_width=True,hide_index = True) """
+        st.dataframe(df_events, width="stretch",hide_index = True) """
     event_history = []
 
     for i, action in enumerate(Constants.actions):
@@ -397,14 +398,14 @@ with st.expander("4: Add actions"):
                 "Initial Seed Index": event.initial_seed_index,
                 "New Seed Index": event.new_seed_index
             } for event in event_history])
-            st.dataframe(df_event_history, use_container_width=True,hide_index = True)
+            st.dataframe(df_event_history, width="stretch",hide_index = True)
 
         if len(event_history) > 0 and initial_seed_index is None:
             df_event_history = pd.DataFrame([{
                 "Event ID": event.event_id,
                 "Name": event.name
             } for event in event_history])
-            st.dataframe(df_event_history, use_container_width=True,hide_index = True)
+            st.dataframe(df_event_history, width="stretch",hide_index = True)
 # Section 5
 with st.expander("Duel Rank calculator (optional)"):
 
@@ -509,7 +510,8 @@ with st.expander("Last Turn"):
         st.write('Identify initial seed index first, and then use this section for the last turn')
     
     if initial_seed_index is not None:
-
+        game_mode_toggle = st.toggle("Are you playing with 15 Card Mod?", value=False)
+        game_mode = '15 Card Mod' if game_mode_toggle else 'Normal'
         for i in range(4):
             col1, col2, col3 = st.columns(3)
             selected_card_input = col1.selectbox(label = f'Field card {i + 1}',options=[f"{card['Id']}: {card['Name']}" for card in Constants.card_data if card['Type'] < 20], key=f"player_last_turn_field_card_{i}",index=None)
@@ -522,7 +524,6 @@ with st.expander("Last Turn"):
                 my_cards_in_field.append(card)
         
 
-        #with st.form("last_turn_form",enter_to_submit=False,border=False):
         st.write('Your Hand')
         columns_last_turn_player_hand = st.columns(5)
         last_hand_card_ids = []
@@ -573,7 +574,7 @@ with st.expander("Last Turn"):
                 possible_battle_phase_actions = generate_attack_combinations_from_cards_in_field(enemy_card,remaining_enemy_LP,main_phase_action,is_enemy_card_in_atk)
                 
                 for j,battle_phase_actions in enumerate(possible_battle_phase_actions):
-                    play = Play(seed_index_at_start_of_last_turn)
+                    play = Play(seed_index_at_start_of_last_turn,game_mode)
                     play.main_phase_action = main_phase_action
                     play.battle_phase_actions = battle_phase_actions                                   
                     play.calculate_drop(enemy_drop_pool)

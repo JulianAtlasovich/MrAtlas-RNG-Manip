@@ -77,6 +77,8 @@ class AnimType(Enum):
     SWIPE_ATK_LOW = 16
     SWIPE_DEF = 17
     TRAP_TRIGGERED = 18
+    LOSE_ATTACK = 19
+    END_OF_DUEL_15_CARD_MOD = 20
 
 
 def get_anim_data():
@@ -133,7 +135,7 @@ def get_card_names():
 
 
 def get_possible_seed_index_by_order(order):
-    print(datetime.now(),"Loading possible seed indexes by order...",order)
+    #print(datetime.now(),"Loading possible seed indexes by order...",order)
     conn = sqlite3.connect('FmDatabase.db')
     c = conn.cursor()
 

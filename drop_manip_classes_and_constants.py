@@ -117,6 +117,7 @@ class Constants:
   events.append(Event(17,"SWIPE_DEF"    ,True ,4926, "Attacking animation when opponent card is in defense mode"))
   events.append(Event(18,"TRAP_TRIGGERED" ,True ,2752, "Animation after an attack that triggers a trap card"))
   events.append(Event(19,"LOSE_ATTACK"  ,True ,4864, "Animation after attacking an opponent monster and losing the attack"))
+  events.append(Event(20,"END_OF_DUEL_15_CARD_MOD"  ,True ,120, "You win animation in 15 card mod"))
 
   field_types = []
   field_types.append([1,"*None*"])
@@ -208,7 +209,8 @@ class Constants:
     'FIELD_USUAL': 4928,
     'FIELD_YAMI': 1856,
     "SPAWN_3D": 1056,
-    "TRAP_TRIGGERED": 2752
+    "TRAP_TRIGGERED": 2752,
+    "END_OF_DUEL_15_CARD_MOD": 120
   }
 
 
@@ -342,7 +344,7 @@ class Main_phase_action:
     
 
   def __eq__(self, other):
-    return self.card_result.cardID == other.card_result.cardID and self.seed_index_delta == other.seed_index_delta and self.card_result.guardian_star == self.card_result.guardian_star and self.my_cards_in_field == other.my_cards_in_field
+    return self.card_result.cardID == other.card_result.cardID and self.seed_index_delta == other.seed_index_delta and self.card_result.guardian_star == other.card_result.guardian_star and self.my_cards_in_field == other.my_cards_in_field
 
   def __str__(self):
     return "current_seed_index: {}, seed_index_delta: {},card result: {},description: {}\n".format(self.seed_index,self.seed_index_delta, self.card_result.name ,self.description)
@@ -358,7 +360,7 @@ class Battle_phase_action:
     return "current_seed_index {}, seed_index_delta: {},description: {}\n".format(self.current_seed_index,self.seed_index_delta, self.description)
 
 class Play:
-  def __init__(self, seed_index):   
+  def __init__(self, seed_index, game_mode='Normal'):   
     self.final_seed_index = 0
     self.main_phase_action = None
     self.battle_phase_actions = []
@@ -366,6 +368,7 @@ class Play:
     self.my_cards_in_field=[]
     self.seed_index = seed_index
     self.seed = index_to_seed(seed_index)
+    self.game_mode = game_mode
 
 
   def calculate_drop(self,enemy_drop_pool):
@@ -373,7 +376,10 @@ class Play:
     seed_index_advancements += self.main_phase_action.seed_index_delta 
     for battle_phase_action in self.battle_phase_actions:
       seed_index_advancements += battle_phase_action.seed_index_delta
-    seed_index_advancements += Constants.anims_steps_adv['END_OF_DUEL']
+    if self.game_mode == '15 Card Mod':
+      seed_index_advancements += Constants.anims_steps_adv['END_OF_DUEL_15_CARD_MOD']
+    else:
+      seed_index_advancements += Constants.anims_steps_adv['END_OF_DUEL'] # Example for normal mode
     self.final_seed_index = self.seed_index + seed_index_advancements
     seed = big_adv(self.seed, seed_index_advancements)
     rng_num = prn(seed) % 2048                         
@@ -391,7 +397,7 @@ class Play:
     text = 'main_phase_action: {}'.format(self.main_phase_action)
     for bpa in self.battle_phase_actions:
       text+='battle_phase_action: {}'.format(str(bpa))
-    text+='end of duel: seed_index_delta: {}, current_seed_index {}\n'.format(15,self.final_seed_index)
+    text+='end of duel: seed_index_delta: {}, current_seed_index {}\n'.format(Constants.anims_steps_adv['END_OF_DUEL_15_CARD_MOD'] if self.game_mode == '15 Card Mod' else Constants.anims_steps_adv['END_OF_DUEL'],self.final_seed_index)
     text+='drop_name: {},dropID: {}\n'.format(self.drop_card.name,self.drop_card.cardID)
     return text
 
