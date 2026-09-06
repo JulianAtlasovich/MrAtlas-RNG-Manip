@@ -49,6 +49,7 @@ with st.expander("1 Your Deck"):
         player_deck_df.index = pd.RangeIndex(start=1, stop=len(player_deck_df) + 1) #starting count from 1
 
         player_deck = get_card_data_from_card_ids(sorted(set(player_card_ids_in_deck))) #removing duplicates for dropdowns
+        player_deck_with_repetitions = get_card_data_from_card_ids(player_card_ids_in_deck)
         st.dataframe(player_deck_df, row_height = 30,height=250,hide_index = False)
         localS.setItem('player_deck_input', player_card_ids_in_deck_input)
 
@@ -93,6 +94,7 @@ if st.button('Reset duel',key="reset_duel"):
 # Section 2
 with st.expander("2 Identify the seed"):
     duelists = get_list_of_opponent_names_st()
+    load_sample_deck_order = st.checkbox("Load Sample Deck Order")
     opponent_name = st.selectbox("Select the opponent:",options=duelists)
     opponent_id = get_opponent_id_by_name(opponent_name)
     initial_seed_index = None
@@ -124,6 +126,13 @@ with st.expander("2 Identify the seed"):
     # Players cards after shuffle    
     st.number_input("Number of player cards used to identify the seed ", min_value=5, max_value=15, key='num_player_cards_used_to_identify_seed')
     selected_player_cards = []
+    sample_deck_order = [0,1,6,10,20]  # one sample order that identifies the seed
+   
+    if load_sample_deck_order and len(player_deck) > 0:
+        for i, sample_index in enumerate(sample_deck_order):
+            card = player_deck_with_repetitions[sample_index]
+            print(f"Sample index: {sample_index}, Card: {card.cardID}: {card.name}",player_deck)
+            st.session_state[f"player_card_{i}"] = f"{card.cardID}: {card.name}"
     
     # first row of columns
     first_5_columns = st.columns(5)
@@ -242,7 +251,6 @@ with st.expander("3: Player and Opponent Deck (informational, no action needed)"
             st.dataframe(combined_opp_deck,hide_index = True, column_config={"Pos": st.column_config.TextColumn(width=1),"Card": st.column_config.TextColumn(width=900)})
 
     if initial_seed_index is not None:  # Initial seed index identified
-        st.write('setup_load_db_to_memory_st',initial_seed_index)
         setup_load_db_to_memory_st(initial_seed_index) # load dbs to memory with variable anim steps for the identified initial seed index
         #Constants.load_dbs_to_memory( initial_seed_index)
         #st.session_state['initial_seed'] = initial_seed_index

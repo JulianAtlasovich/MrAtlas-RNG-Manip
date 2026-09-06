@@ -390,7 +390,7 @@ def generate_main_phase_actions(hand,my_cards_in_field,initial_seed_index,field_
   """receives a hand, returns all possible fusions"""
   main_phase_actions = []
   for fusion_combination in Constants.fusion_combinations:
-  #for fusion_combination in [[1,3,2,0]]: #debug
+  #for fusion_combination in [[0, 4, 2]]: #debug
     main_phase_action_pair = generate_main_phase_action_pair(hand,fusion_combination,field_type,enemy_card)
     for main_phase_action in main_phase_action_pair:
       if main_phase_action is not None and main_phase_action not in main_phase_actions:
@@ -631,9 +631,9 @@ def create_attack_combination(attack_order,my_cards,enemy_card,attack_order_seed
   
 def generate_attack_combinations_from_cards_in_field(enemy_card,remaining_enemy_LP,main_phase_action,is_enemy_card_in_atk):
   attack_types = ['Normal','Quick3D','SPAWN_3D'] 
-  #attack_types = ['SPAWN_3D'] #debug
+  #attack_types = ['Quick3D'] #debug
   attack_orders = list(permutations(range(len(main_phase_action.my_cards_in_field)))) 
-  #attack_orders = [[2,1,0]] #debug
+  #attack_orders = [[4,0,1]] #debug
   attack_combinations = []
   for i,attack_order in enumerate(attack_orders):
     for attack_type in attack_types:
