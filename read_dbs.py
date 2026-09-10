@@ -134,17 +134,21 @@ def get_card_names():
     return list(map(lambda x: x[0], sorts))
 
 
-def get_possible_seed_index_by_order(order):
+def get_possible_seed_index_by_order(order,min_seed_index,max_seed_index):
     #print(datetime.now(),"Loading possible seed indexes by order...",order)
     conn = sqlite3.connect('FmDatabase.db')
     c = conn.cursor()
 
     # Dynamically generate the SQL query based on the length of the order array
     placeholders = ' AND '.join([f"Card{i} IN ({','.join(['?'] * len(order[i]))})" for i in range(len(order))])
-    sql = f"SELECT SeedIndex FROM DeckOrders WHERE {placeholders}"
-
-    # Flatten the order array for query parameters
     flat_order = [item for sublist in order for item in sublist]
+    if min_seed_index > 0:
+        placeholders += " AND SeedIndex >= ?"
+        flat_order.append(min_seed_index)
+    if max_seed_index > 0:
+        placeholders += " AND SeedIndex <= ?"
+        flat_order.append(max_seed_index)
+    sql = f"SELECT SeedIndex FROM DeckOrders WHERE {placeholders}"
 
     # Execute the query
     c.execute(sql, flat_order)

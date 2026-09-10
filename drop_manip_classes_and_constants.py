@@ -81,6 +81,50 @@ class Constants:
   [39, 'Duel Master K',15]
   ]
 
+  
+  opponents_strongest_card_ids = {
+    1: [21,9,167],
+    2: [9,56,105],
+    3: [4,100,29],
+    4: [516,485,563],
+    5: [367,97,599],
+    6: [367,97,599],
+    7: [38,379,26],
+    8: [67,713,217],
+    9: [80,98,570],
+    10: [367,60,234],
+    11: [386,551,63],
+    12: [391,551,532],
+    13: [440,447,624],
+    14: [551,532,639],
+    15: [713,385,565],
+    16: [217,613,442],
+    17: [1,69,565],
+    18: [367,379,440],
+    19: [82,473,389],
+    20: [90,126,582],
+    21: [223,565,443],
+    22: [710,35,373],
+    23: [367,529,92],
+    24: [67,57,717],
+    25: [465,571,39],
+    26: [713,217,613],
+    27: [509,564,531],
+    28: [391,22,35],
+    29: [33,572,92],
+    30: [374,217,37],
+    31: [374,613,371],
+    32: [374,713,217],
+    33: [392,391,370],
+    34: [707,391,22],
+    35: [374,713,217],
+    36: [380,374,713],
+    37: [713,217,1],
+    38: [380,374,67],
+    39: []
+  }
+
+
   actions = []  
   actions.append(Action(1, 'Dump'))
   actions.append(Action(2, 'Fusion'))
@@ -91,9 +135,6 @@ class Constants:
   actions.append(Action(7, 'Change Field'))
   actions.append(Action(8, 'Trap Triggered'))
 
-  #'attack card
-  #field card
-  #direct attack
 
 
   events = []
@@ -156,7 +197,6 @@ class Constants:
   }
 
 
-
   opponents_with_special_field_type = {
     21: 6, #opponent_id : fielt_type
     22: 6,
@@ -215,30 +255,30 @@ class Constants:
 
 
   guardian_star_strong_against = {
-    'MARS'    : 'JUPITER',
-    'JUPITER' : 'SATURN',
-    'SATURN'  : 'URANUS',
-    'URANUS'  : 'PLUTO',
-    'PLUTO'   : 'NEPTUNE',
-    'NEPTUNE' : 'MARS',
-    'MERCURY'   : 'SUN',
-    'SUN'   : 'MOON',
-    'MOON'    : 'VENUS',
-    'VENUS'   : 'MERCURY'
+    "MARS ♂"    : 'JUPITER ♃',
+    'JUPITER ♃' : 'SATURN ♄',
+    'SATURN ♄'  : 'URANUS ⛢',
+    'URANUS ⛢'  : 'PLUTO ♇',
+    'PLUTO ♇'   : 'NEPTUNE ♆',
+    'NEPTUNE ♆' : "MARS ♂",
+    'MERCURY ☿'   : 'SUN ☉',
+    'SUN ☉'   : 'MOON ☾',
+    'MOON ☾'    : 'VENUS ♀',
+    'VENUS ♀'   : 'MERCURY ☿'
   }
 
   guardian_star_names = [
     "N/A",
-    "MARS",
-    "JUPITER",
-    "SATURN",
-    "URANUS",
-    "PLUTO",
-    "NEPTUNE",
-    "MERCURY",
-    "SUN",
-    "MOON",
-    "VENUS"
+    "MARS ♂",
+    "JUPITER ♃",
+    "SATURN ♄",
+    "URANUS ⛢",
+    "PLUTO ♇",
+    "NEPTUNE ♆",
+    "MERCURY ☿",
+    "SUN ☉",
+    "MOON ☾",
+    "VENUS ♀"
   ]
 
   non_monster_card_types = {
@@ -257,6 +297,7 @@ class Constants:
 
 
   card_data = card_data
+
   
   enemy_drop_pool = list()
 
@@ -298,6 +339,17 @@ class Constants:
     cls.variable_anim_steps['BURN_3D'] = dict(animation_db_cursor.execute(query).fetchall())
     query = 'select InitialSeedIndex,AdvanceSize from VariableAdvs where AnimationID = {} and InitialSeedIndex between {} and {}'.format(13,initial_seed_index,initial_seed_index+seeds_to_consider)
     cls.variable_anim_steps['GS_ANIM'] = dict(animation_db_cursor.execute(query).fetchall())
+
+Constants.opponents_strongest_card_description = {
+  opponent_id: "\n".join(
+    f"{Constants.card_data[card_id - 1]['Name']} "
+    f"[{Constants.guardian_star_names[Constants.card_data[card_id - 1]['GuardianStarA']]}] "
+    f"({Constants.card_data[card_id - 1]['Attack']}/{Constants.card_data[card_id - 1]['Defense']})"
+    for card_id in strongest_card_ids
+  )
+  for opponent_id, strongest_card_ids in Constants.opponents_strongest_card_ids.items()
+}
+
     
     
 

@@ -16,8 +16,8 @@ def get_list_of_opponent_names_st(): # to cache opponent names
   return get_list_of_opponent_names()
 
 @st.cache_data(ttl=600)
-def get_possible_seed_index_by_order_st(order):
-  return get_possible_seed_index_by_order(order)
+def get_possible_seed_index_by_order_st(order, min_seed_index, max_seed_index):
+  return get_possible_seed_index_by_order(order, min_seed_index, max_seed_index)
 
 def get_opponent_name_by_id(opponent_id):
   return Constants.opponents[opponent_id-1][1]
@@ -161,12 +161,12 @@ def read_deck_and_hand():
   hand = list(map(int,hand))
   return my_deck,hand
   
-def get_initial_possible_seeds(my_deck,hand):
+def get_initial_possible_seeds(my_deck,hand,min_seed_index,max_seed_index):  
   order = []
   for i in range(len(hand)):
     card_pos = get_index_positions(my_deck,hand[i])
     order.append(card_pos)
-  possible_seed_indexes = get_possible_seed_index_by_order_st(order)
+  possible_seed_indexes = get_possible_seed_index_by_order_st(order, min_seed_index, max_seed_index)
   return possible_seed_indexes
 
 

@@ -85,6 +85,7 @@ if st.button('Reset duel',key="reset_duel"):
     st.session_state['last_turn_remaining_opp_cards'] = 0
     st.session_state['last_turn_remaining_lp'] = 0
     st.session_state['last_turn_desired_drop_cards'] = []
+    st.session_state['show_first_opponent_card'] = False
     
     
     
@@ -94,8 +95,15 @@ if st.button('Reset duel',key="reset_duel"):
 # Section 2
 with st.expander("2 Identify the seed"):
     duelists = get_list_of_opponent_names_st()
-    load_sample_deck_order = st.checkbox("Load Sample Deck Order")
-    opponent_name = st.selectbox("Select the opponent:",options=duelists)
+    min_seed_index, max_seed_index,load_sample_deck_order = st.columns([1.5,1.5,1], vertical_alignment="bottom")
+    load_sample_deck_order = load_sample_deck_order.checkbox("Load Sample Deck Order")
+    min_seed_index = min_seed_index.number_input("Minimum seed index to consider", min_value=0, value=0, key='min_seed_index')
+    max_seed_index = max_seed_index.number_input("Max seed to consider (0 for no limit)", min_value=0, value=0, key='max_seed_index')
+    opponent_name,opponent_data,_ = st.columns([1.5,1.5,1], vertical_alignment="top")
+    opponent_name = opponent_name.selectbox("Select the opponent:",options=duelists)
+    opponent_id = get_opponent_id_by_name(opponent_name)
+    opponent_data = opponent_data.text(f'{Constants.opponents_strongest_card_description.get(opponent_id,"N/A")}')
+
     opponent_id = get_opponent_id_by_name(opponent_name)
     initial_seed_index = None
     
@@ -111,6 +119,7 @@ with st.expander("2 Identify the seed"):
     combined_opp_deck = []    
     combined_player_deck = []     
     possible_seed_indexes = []
+    should_show_first_opponent_card = False
 
     no_field_type = True # default field type is None, but mages have a field type in campaign when duel starts
     if opponent_id in Constants.opponents_with_special_field_type.keys():
@@ -131,7 +140,6 @@ with st.expander("2 Identify the seed"):
     if load_sample_deck_order and len(player_deck) > 0:
         for i, sample_index in enumerate(sample_deck_order):
             card = player_deck_with_repetitions[sample_index]
-            print(f"Sample index: {sample_index}, Card: {card.cardID}: {card.name}",player_deck)
             st.session_state[f"player_card_{i}"] = f"{card.cardID}: {card.name}"
     
     # first row of columns
@@ -172,6 +180,9 @@ with st.expander("2 Identify the seed"):
                 selected_player_cards.append(int(selected_card.split(":")[0]))
 
     # Opponent cards after shuffle
+    if st.session_state.get('show_first_opponent_card', False):
+        st.session_state['num_opponent_cards_used_to_identify_seed'] = 1
+        st.session_state['show_first_opponent_card'] = False
     st.number_input("Number of opponent cards used to identify the seed ", min_value=0, max_value=15, key='num_opponent_cards_used_to_identify_seed')
     selected_opponent_cards = []
     if st.session_state['num_opponent_cards_used_to_identify_seed'] > 0:
@@ -180,17 +191,17 @@ with st.expander("2 Identify the seed"):
             ids_at_position = sorted(set(deck[i] for deck in st.session_state['list_of_possible_opp_decks']))  # Collect IDs at this position
             cards_at_position = get_card_data_from_card_ids(ids_at_position)            
             if len(cards_at_position) == 1:
-                selected_card = opp_card_columns_columns[i].selectbox(label = ' ',label_visibility='collapsed',options=[f"{card.cardID}: {card.name}" for card in cards_at_position],key=f"opp_card_{i+1}",disabled=True,placeholder=f"Opponent card {i+1}")
+                selected_card = opp_card_columns_columns[i].selectbox(label = ' ',label_visibility='collapsed',options=[f"{card.cardID}: {card.name} {card.guardian_star.split()[1]}" for card in cards_at_position],key=f"opp_card_{i+1}",disabled=True,placeholder=f"Opponent card {i+1}")
             else:
-                selected_card = opp_card_columns_columns[i].selectbox(label = ' ',label_visibility='collapsed',options=[f"{card.cardID}: {card.name}" for card in cards_at_position],key=f"opp_card_{i+1}",index=None,placeholder=f"Opponent card {i+1}")
+                selected_card = opp_card_columns_columns[i].selectbox(label = ' ',label_visibility='collapsed',options=[f"{card.cardID}: {card.name} {card.guardian_star.split()[1]}" for card in cards_at_position],key=f"opp_card_{i+1}",index=None,placeholder=f"Opponent card {i+1}")
             if selected_card:
                 selected_opponent_cards.append(int(selected_card.split(":")[0]))
 
     # First guess at possible seed indexes   
    
     if len(selected_player_cards)>=5:
-        possible_seed_indexes = get_initial_possible_seeds(player_card_ids_in_deck,selected_player_cards) 
-    if len(possible_seed_indexes) > 0:        
+        possible_seed_indexes = get_initial_possible_seeds(player_card_ids_in_deck,selected_player_cards,min_seed_index,max_seed_index) 
+    if len(possible_seed_indexes) > 0: 
         # Iterate over possible seed indexes and discard them based on the opponent cards
         for possible_seed_index in possible_seed_indexes[:]: #iterate over a copy of the list to allow removal during iteration
             (poss_opp_deck, _) = create_opponent_deck(opp_pool, possible_seed_index,opponent_name,player_card_ids_in_deck)            
@@ -202,9 +213,14 @@ with st.expander("2 Identify the seed"):
         
     if len(possible_seed_indexes)==0 and len(selected_player_cards)>=5:
         st.write(':red[No possible seed indexes found with that shuffling order. Review your card selection. Remember to reset your console before each duel]')
-    if len(possible_seed_indexes)>=1:        
+    if len(possible_seed_indexes)>=1:                
         st.session_state['list_of_possible_opp_decks'] = []
         st.session_state['list_of_possible_player_decks'] = []
+
+        if len(possible_seed_indexes) > 1 and st.session_state['num_opponent_cards_used_to_identify_seed'] == 0:
+            st.session_state['show_first_opponent_card'] = True
+            should_show_first_opponent_card = True
+
         # Iterate over all possible seed indexes and save all possible opponent decks
         for possible_seed_index in possible_seed_indexes:
             (poss_opp_deck, _) = create_opponent_deck(opp_pool, possible_seed_index,opponent_name,player_card_ids_in_deck)
@@ -231,6 +247,10 @@ with st.expander("2 Identify the seed"):
         if len(possible_seed_indexes)>1:
             st.write(f"First card position with multiple options for Player: {st.session_state['first_card_index_in_player_deck_with_multiple_options']}, and Opponent: {st.session_state['first_card_index_in_opp_deck_with_multiple_options']}")
             st.write('No. of possible seed indexes: ',len(possible_seed_indexes),'add more player or opponent cards to identify the initial seed index uniquely')
+            st.write(' / '.join(map(str, possible_seed_indexes)))
+
+        if should_show_first_opponent_card:
+            st.rerun()
     
     if possible_seed_indexes is not None and len(possible_seed_indexes)==1:
         initial_seed_index = possible_seed_indexes[0]
@@ -260,11 +280,14 @@ with st.expander("3: Player and Opponent Deck (informational, no action needed)"
         player_deck_shuffled = get_card_data_from_card_ids(player_deck_shuffled)
         with st.expander("Player's deck"):
             df_player_deck_shuffled = pd.DataFrame(([o.to_dict() for o in player_deck_shuffled])).drop(columns=["Guardian Star", "Cards left in Opp Deck"])
-            st.dataframe(df_player_deck_shuffled, width="stretch",row_height = 30,height=250,hide_index = True)
+            df_player_deck_shuffled.index = pd.RangeIndex(start=1, stop=len(df_player_deck_shuffled) + 1, name="Order")
+            st.dataframe(df_player_deck_shuffled, width="stretch",row_height = 30,height=250,hide_index = False)
+
         
         with st.expander("Opponent's deck"):
             df_opp_cards = pd.DataFrame(([o.to_dict() for o in opp_cards_to_play_order])).drop(columns=["Guardian Stars"])
-            st.dataframe(df_opp_cards, width="stretch",row_height = 30,height=250,hide_index = True)
+            df_opp_cards.index = pd.RangeIndex(start=1, stop=len(df_opp_cards) + 1, name="Order")
+            st.dataframe(df_opp_cards, width="stretch",row_height = 30,height=250,hide_index = False)
 
 
 # Section 4
