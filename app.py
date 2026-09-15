@@ -605,9 +605,9 @@ with st.expander("Last Turn"):
         st.write('Identify initial seed index first, and then use this section for the last turn')
 
     
-    input_method = st.radio("Choose Input Method. Simplified Mode is quicker to use but the search is not exhaustive",["Simplified Mode", "Detailed Mode"],horizontal = True)
+    input_method = st.radio("Choose Input Method. Simplified Mode is quicker to use but the search is not exhaustive",["Standard Mode","Simplified Mode"],horizontal = True)
 
-    if initial_seed_index is not None and input_method == "Detailed Mode":        
+    if initial_seed_index is not None and input_method == "Standard Mode":        
         my_cards_in_field = []
         for i in range(4):
             col1, col2, col3 = st.columns(3)
