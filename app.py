@@ -82,7 +82,6 @@ with st.expander("Tool Guide"):
     - You must enter each duel using the default ID card sorting.
     - You must play all your monsters face up. (Doesn't apply to magic,traps,equips)
     - You can't use any magic card that is not a field card. No removal cards (e.g. "Dark Hole", "Raigeki", "Dragon Capture Jar")
-    - It's recommended to minimize the number of repeated cards in your deck, to identify the seed quicker. Otherwise you'll need to input more cards to identify it
     - It's recommended to have a highly fusable hand on the last turn. This increases the chances of a successful RNG manipulation.
     """)
     
