@@ -3,7 +3,7 @@ from rng_core import *
 from drop_manip_classes_and_constants import *
 from db_queries import *
 import copy
-from itertools import permutations
+from itertools import permutations, product
 from datetime import datetime
 import streamlit as st
 
@@ -641,6 +641,80 @@ def generate_attack_combinations_from_cards_in_field(enemy_card,remaining_enemy_
       if is_enemy_dead:
         attack_combinations.append(attack_combination)  
   return attack_combinations
+
+## Simplified search section
+
+def generate_simplified_main_phase_actions(initial_seed_index,max_fusions,max_equips,max_drops):
+  main_phase_actions = []
+  for num_fusions,num_equips,num_drops in product(range(max_fusions + 1),range(max_equips + 1),range(max_drops + 1)):
+    seed_index_delta = (
+      num_fusions * Constants.anims_steps_adv['FUSION']
+      + num_equips * Constants.anims_steps_adv['EQUIP']
+      + num_drops * Constants.anims_steps_adv['DUMP']
+    )
+    card_result = Card()
+    card_result.name = 'N/A'
+    description = 'Fusions: {}, Equips: {}, Drops: {}'.format(num_fusions,num_equips,num_drops)
+    main_phase_action = Main_phase_action(card_result,seed_index_delta,description,'SIMPLIFIED')
+    main_phase_action.action_counts = (num_fusions,num_equips,num_drops)
+    main_phase_action.seed_index = initial_seed_index + seed_index_delta
+    main_phase_actions.append(main_phase_action)
+  return main_phase_actions
+
+def generate_simplified_battle_phase_actions(initial_seed_index,is_enemy_card_in_atk,is_gs_animation_possible):
+  attack_damage_options = [('N/A',1)]
+  if is_enemy_card_in_atk:
+    attack_damage_options = [
+      ('< 1000',1)
+    ]
+  guardian_star_options = [False,True] if is_gs_animation_possible else [False]
+  guardian_star_pair = next(iter(Constants.guardian_star_strong_against.items()))
+  battle_phase_action_combinations = []
+  for has_guardian_star_animation,(attack_damage,attacker_attack),attack_type in product(
+    guardian_star_options,
+    attack_damage_options,
+    ['Normal','Quick3D','SPAWN_3D']
+  ):
+    attacker = Card()
+    attacker.name = 'Simplified attacker'
+    attacker.attack = attacker_attack
+    attacker.guardian_star = 'N/A'
+    enemy = Card()
+    enemy.attack = 0
+    enemy.defense = 0
+    enemy.guardian_star = 'N/A'
+    if has_guardian_star_animation:
+      attacker.guardian_star,enemy.guardian_star = guardian_star_pair
+    attack_card_action = create_action_from_my_card_attack_to_enemy_card(0,attacker,enemy,initial_seed_index,is_enemy_card_in_atk,attack_type)
+    attack_card_action.description = '{}; {} damage{}'.format(
+      attack_card_action.description,
+      attack_damage,
+      '; Guardian Star animation' if has_guardian_star_animation else ''
+    )
+    direct_attacker = Card()
+    direct_attacker.name = 'Simplified direct attacker'
+    direct_attacker.attack = 1000
+    direct_attack_action = create_action_from_my_card_attack_to_enemy_LP(0,direct_attacker,attack_card_action.current_seed_index)
+    direct_attack_action.description = '{}; >= 1000 damage'.format(direct_attack_action.description)
+    battle_phase_action_combinations.append([attack_card_action,direct_attack_action])
+  return battle_phase_action_combinations
+
+def search_simplified_plays(initial_seed_index,game_mode,desired_drop_card_ids,enemy_drop_pool,max_fusions,max_equips,max_drops,is_enemy_card_in_atk,is_gs_animation_possible,max_plays_per_drop=10):
+  desired_drop_card_ids = dict.fromkeys(desired_drop_card_ids)
+  matching_plays_by_drop = {card_id: [] for card_id in desired_drop_card_ids}
+  main_phase_actions = generate_simplified_main_phase_actions(initial_seed_index,max_fusions,max_equips,max_drops)
+  for main_phase_action in main_phase_actions:
+    battle_phase_action_combinations = generate_simplified_battle_phase_actions(main_phase_action.seed_index,is_enemy_card_in_atk,is_gs_animation_possible)
+    for battle_phase_actions in battle_phase_action_combinations:
+      play = Play(initial_seed_index,game_mode)
+      play.main_phase_action = main_phase_action
+      play.battle_phase_actions = battle_phase_actions
+      play.calculate_drop(enemy_drop_pool)
+      if play.drop_card.cardID in matching_plays_by_drop and len(matching_plays_by_drop[play.drop_card.cardID]) < max_plays_per_drop:
+        matching_plays_by_drop[play.drop_card.cardID].append(play)
+  return matching_plays_by_drop
+
+## End Simplified search section
 
 def calculate_duel_rank(num_fusions,num_effectives,num_facedowns,num_magics,num_equips,num_traps,cards_used,num_turns,num_defensive_wins,remaining_lp):
   duel_rank_points = 52 # 50 base + 2 for Total Annihilation victory condition

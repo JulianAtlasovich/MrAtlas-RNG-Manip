@@ -129,11 +129,13 @@ class Constants:
   actions.append(Action(1, 'Dump'))
   actions.append(Action(2, 'Fusion'))
   actions.append(Action(3, 'G. Star Anim'))
-  actions.append(Action(4, 'Attack Card'))
-  actions.append(Action(5, 'Attack LP'))
-  actions.append(Action(6, 'Equip'))
-  actions.append(Action(7, 'Change Field'))
-  actions.append(Action(8, 'Trap Triggered'))
+  actions.append(Action(4, 'Attack Card DEF'))
+  actions.append(Action(5, 'Attack Card ATK <1k'))
+  actions.append(Action(6, 'Attack Card ATK >=1k'))
+  actions.append(Action(7, 'Attack LP'))
+  actions.append(Action(8, 'Equip'))
+  actions.append(Action(9, 'Change Field'))
+  actions.append(Action(10, 'Trap Triggered'))
 
 
 
@@ -267,6 +269,20 @@ class Constants:
     'VENUS ♀'   : 'MERCURY ☿'
   }
 
+  
+  guardian_star_weak_against = {
+    'MARS ♂'    : 'NEPTUNE ♆',
+    'JUPITER ♃' : "MARS ♂",
+    'SATURN ♄'  :  'JUPITER ♃',
+    'URANUS ⛢'  : 'SATURN ♄' ,
+    'PLUTO ♇'   :  'URANUS ⛢',
+    'NEPTUNE ♆' : 'PLUTO ♇' ,
+    'MERCURY ☿'   :  'VENUS ♀' ,
+    'SUN ☉'   : 'MERCURY ☿',
+    'MOON ☾'    :  'SUN ☉' ,
+    'VENUS ♀'   : 'MOON ☾'
+  }
+
   guardian_star_names = [
     "N/A",
     "MARS ♂",
@@ -331,7 +347,7 @@ class Constants:
   @classmethod
   def load_dbs_to_memory(cls,initial_seed_index):
     cls.variable_anim_steps = {}
-    seeds_to_consider = 230000
+    seeds_to_consider = 60000
     animation_db_cursor = (sqlite3.connect('AnimationDatabase.db')).cursor()
     query = 'select InitialSeedIndex,AdvanceSize from VariableAdvs where AnimationID = {} and InitialSeedIndex between {} and {}'.format(1,initial_seed_index,initial_seed_index+seeds_to_consider)
     cls.variable_anim_steps['BURN'] = dict(animation_db_cursor.execute(query).fetchall())

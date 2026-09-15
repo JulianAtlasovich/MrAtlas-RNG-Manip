@@ -8,6 +8,62 @@ from datetime import datetime
 from streamlit_local_storage import LocalStorage
 #import ptvsd
 
+
+def add_selected_drop_card_ids():
+    selected_drop_cards = st.session_state.get('last_turn_desired_drop_cards', [])
+    selected_card_ids = [card.split(':', 1)[0] for card in selected_drop_cards]
+    typed_card_ids = st.session_state.get('last_turn_desired_drop_card_ids', '').split()
+    st.session_state['last_turn_desired_drop_card_ids'] = ' '.join(dict.fromkeys(typed_card_ids + selected_card_ids))
+
+def enable_action_shortcuts():
+    st.iframe(
+                """
+                <script>
+                const shortcutButtons = {
+                    "1": "Dump (Alt+1)",
+                    "2": "Fusion (Alt+2)",
+                    "3": "Equip (Alt+3)",
+                    "4": "G. Star Anim (Alt+4)",
+                    "5": "Attack Card DEF (Alt+5)",
+                    "6": "Attack Card ATK <1k (Alt+6)",
+                    "7": "Attack Card ATK >=1k (Alt+7)",
+                    "8": "Attack LP (Alt+8)",
+                    "9": "Change Field (Alt+9)",
+                    "0": "Trap Triggered (Alt+0)"
+                };
+
+                const parentDocument = window.parent.document;
+                if (!window.parent.atlasActionShortcutsInstalled) {
+                    window.parent.atlasActionShortcutsInstalled = true;
+                    parentDocument.addEventListener("keydown", (event) => {
+                        if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || event.repeat) {
+                            return;
+                        }
+
+                        const buttonLabel = shortcutButtons[event.key];
+                        if (!buttonLabel) {
+                            return;
+                        }
+
+                        const button = Array.from(parentDocument.querySelectorAll("button")).find(
+                            (candidate) => candidate.innerText.trim() === buttonLabel
+                        );
+                        if (button) {
+                            event.preventDefault();
+                            button.click();
+                        }
+                    }, true);
+                }
+                </script>
+                """,
+                height=1,
+        )
+
+
+def add_event(event_name):
+        st.session_state['events_input'] = st.session_state.get('events_input', '') + f" {get_event_id_by_name(event_name)}"
+
+
 st.set_page_config(layout="wide")
 st.title("""The Atlas of RNG Manipulation for YGO Forbidden Memories""")
 localS = LocalStorage()
@@ -82,7 +138,7 @@ if st.button('Reset duel',key="reset_duel"):
     st.session_state['player_last_turn_field_card_3'] = None
     for i in range(5):
         st.session_state[f'player_last_turn_card_{i}'] = None
-    st.session_state['last_turn_remaining_opp_cards'] = 0
+    st.session_state['last_turn_remaining_opp_cards'] = 33
     st.session_state['last_turn_remaining_lp'] = 0
     st.session_state['last_turn_desired_drop_cards'] = []
     st.session_state['show_first_opponent_card'] = False
@@ -191,9 +247,9 @@ with st.expander("2 Identify the seed"):
             ids_at_position = sorted(set(deck[i] for deck in st.session_state['list_of_possible_opp_decks']))  # Collect IDs at this position
             cards_at_position = get_card_data_from_card_ids(ids_at_position)            
             if len(cards_at_position) == 1:
-                selected_card = opp_card_columns_columns[i].selectbox(label = ' ',label_visibility='collapsed',options=[f"{card.cardID}: {card.name} {card.guardian_star.split()[1]}" for card in cards_at_position],key=f"opp_card_{i+1}",disabled=True,placeholder=f"Opponent card {i+1}")
+                selected_card = opp_card_columns_columns[i].selectbox(label = ' ',label_visibility='collapsed',options=[f"{card.cardID}: {card.name} {card.guardian_star.split()[1] if len(card.guardian_star.split()) > 1 else ''}" for card in cards_at_position],key=f"opp_card_{i+1}",disabled=True,placeholder=f"Opponent card {i+1}")
             else:
-                selected_card = opp_card_columns_columns[i].selectbox(label = ' ',label_visibility='collapsed',options=[f"{card.cardID}: {card.name} {card.guardian_star.split()[1]}" for card in cards_at_position],key=f"opp_card_{i+1}",index=None,placeholder=f"Opponent card {i+1}")
+                selected_card = opp_card_columns_columns[i].selectbox(label = ' ',label_visibility='collapsed',options=[f"{card.cardID}: {card.name} {card.guardian_star.split()[1] if len(card.guardian_star.split()) > 1 else ''}" for card in cards_at_position],key=f"opp_card_{i+1}",index=None,placeholder=f"Opponent card {i+1}")
             if selected_card:
                 selected_opponent_cards.append(int(selected_card.split(":")[0]))
 
@@ -246,8 +302,8 @@ with st.expander("2 Identify the seed"):
 
         if len(possible_seed_indexes)>1:
             st.write(f"First card position with multiple options for Player: {st.session_state['first_card_index_in_player_deck_with_multiple_options']}, and Opponent: {st.session_state['first_card_index_in_opp_deck_with_multiple_options']}")
-            st.write('No. of possible seed indexes: ',len(possible_seed_indexes),'add more player or opponent cards to identify the initial seed index uniquely')
-            st.write(' / '.join(map(str, possible_seed_indexes)))
+            st.write(f'{len(possible_seed_indexes)} possible seed indexes: ',' / '.join(map(str, possible_seed_indexes)),'. Add more player or opponent cards to identify the initial seed index uniquely')
+            st.write()
 
         if should_show_first_opponent_card:
             st.rerun()
@@ -302,87 +358,70 @@ with st.expander("4: Add actions"):
         st.session_state['count_equips'] = 0
     if 'count_magics' not in st.session_state:
         st.session_state['count_magics'] = 0
-    a = """ with st.expander("List of Possible Events:"):
-        df_events = pd.DataFrame([{"Event ID": event.event_id, "Name": event.name, "Seed Advancements": event.seed_advancements , "Description": event.description} for event in Constants.events])
-        df_events = df_events[df_events["Event ID"] != 0] # Exclude the initial deck shuffling event from display
-        st.dataframe(df_events, width="stretch",hide_index = True) """
     event_history = []
 
-    for i, action in enumerate(Constants.actions):
-        col1, col2, col3, col4, col5 = st.columns(5,vertical_alignment="bottom")
-        col1.write(' ')
-        add_action = col1.button(f'{action.name}', key=f"action_add_btn_{action.action_id}",width ='stretch')
+    enable_action_shortcuts()
 
-        if action.name in ['Attack Card','Change Field','Fusion','Equip','Trap Triggered']: #not in ["Dump","Attack LP"]:
-            who_did_the_action = col2.selectbox('Who did the action?', options=['Player', 'Opponent'], key=f"action_who_{i}")
-        
-        if action.name == "G. Star Anim" and add_action:
-            st.session_state['events_input'] += f" {get_event_id_by_name('GS_ANIM')}"
+    col1, col2, col3, col4 = st.columns(4)
+    add_dump = col1.button('Dump (Alt+1)', key='action_add_btn_1', width='stretch')
+    add_fusion = col2.button('Fusion (Alt+2)', key='action_add_btn_2', width='stretch')
+    add_equip = col3.button('Equip (Alt+3)', key='action_add_btn_3', width='stretch')
+    add_gs_animation = col4.button('G. Star Anim (Alt+4)', key='action_add_btn_4', width='stretch')
+    if add_equip:
+        add_event('EQUIP')
+        st.session_state['count_equips'] += 1
+    if add_dump:
+        add_event('DUMP')
+    if add_fusion:
+        add_event('FUSION')
+        st.session_state['count_fusions'] += 1
+    if add_gs_animation:
+        add_event('GS_ANIM')
 
-        if action.name == "Attack Card":
-            was_card_destroyed = col3.selectbox('Attacked Card destroyed?', options=['Yes', 'No'], key=f"action_attack_destroyed_{i}")            
-            atk_card_mode = col4.selectbox('Attacked Card Mode', options=['DEF','ATK'], key=f"action_attack_type_{i}")
-            if atk_card_mode == 'ATK' or was_card_destroyed == 'No':
-                dmg_done = col5.selectbox('Damage done',options=['< 1000','>= 1000','0'], key=f"action_attack_damage_{i}")
-            
-            # Add events based on selections
-            if add_action:                
-                if atk_card_mode == 'ATK':
-                    st.session_state['events_input'] += f" {get_event_id_by_name('LOSE_ATTACK')}" if was_card_destroyed == 'No' else ''
-                    st.session_state['count_effective_attacks'] += 1 if who_did_the_action == 'Player' and was_card_destroyed == 'Yes' else 0
-                    if dmg_done != '0':
-                        st.session_state['events_input'] += f" {get_event_id_by_name('SWIPE_ATK_LOW')}" if dmg_done == '< 1000' else f" {get_event_id_by_name('SWIPE_ATK_HIGH')}" if dmg_done == '>= 1000' else ''
-                        st.session_state['events_input'] += f" {get_event_id_by_name('BURN')}"
-                    if dmg_done == '0':
-                        st.session_state['events_input'] += f" {get_event_id_by_name('SWIPE_DEF')} {get_event_id_by_name('BURN')} {get_event_id_by_name('SWIPE_DEF')} {get_event_id_by_name('BURN')}"
-            
-                if atk_card_mode == 'DEF':
-                    if was_card_destroyed == 'No':
-                        st.session_state['events_input'] += f" {get_event_id_by_name('LOSE_ATTACK')}"
-                        st.session_state['events_input'] += f" {get_event_id_by_name('DIRECT_LOW')}" if dmg_done == '< 1000' else f" {get_event_id_by_name('DIRECT_HIGH')}" if dmg_done == '>= 1000' else ''
-                    else:
-                        st.session_state['events_input'] += f" {get_event_id_by_name('SWIPE_DEF')}"
-                        st.session_state['events_input'] += f" {get_event_id_by_name('BURN')}"
-            
-            
+    col1, col2, col3, col4 = st.columns(4, vertical_alignment='bottom')
+    add_attack_def = col1.button('Attack Card DEF (Alt+5)', key='action_add_btn_5', width='stretch')
+    add_attack_atk_low = col2.button('Attack Card ATK <1k (Alt+6)', key='action_add_btn_6', width='stretch')
+    add_attack_atk_high = col3.button('Attack Card ATK >=1k (Alt+7)', key='action_add_btn_7', width='stretch')
+    was_card_destroyed = col4.selectbox('Attacked Card destroyed?', options=['Yes', 'No'], key='action_attack_destroyed')
 
-        if action.name == "Attack LP":
-            action_attack_damage = col2.selectbox('Damage done',options=['>= 1000','< 1000'], key=f"action_attack_damage_{i}")
-            if add_action:
-                match action_attack_damage:
-                    case '< 1000':
-                        st.session_state['events_input'] += f" {get_event_id_by_name('DIRECT_LOW')}"
-                    case '>= 1000':
-                        st.session_state['events_input'] += f" {get_event_id_by_name('DIRECT_HIGH')}"               
-        
-        if action.name == "Change Field":
-            field_type_selected = col3.selectbox('Field Type',options=['Mountain','Yami','Other'], key=f"action_change_field_{i}")
-            if add_action:
-                st.session_state['count_magics'] += 1 if who_did_the_action == 'Player' else 0
-                match field_type_selected:
-                    case 'Mountain':
-                        st.session_state['events_input'] += f" {get_event_id_by_name('FIELD_MOUNT')}"
-                    case 'Yami':
-                        st.session_state['events_input'] += f" {get_event_id_by_name('FIELD_YAMI')}"
-                    case 'Other':
-                        st.session_state['events_input'] += f" {get_event_id_by_name('FIELD_USUAL')}"
+    if add_attack_def:
+        if was_card_destroyed == 'Yes':
+            add_event('SWIPE_DEF')
+            add_event('BURN')
+        else:
+            add_event('LOSE_ATTACK')
 
-        if action.name == "Dump" and add_action:
-            st.session_state['events_input'] += f" {get_event_id_by_name('DUMP')}" 
-        
-        if action.name == "Fusion" and add_action:
-            st.session_state['events_input'] += f" {get_event_id_by_name('FUSION')}"
-            st.session_state['count_fusions'] += 1 if who_did_the_action == 'Player' else 0
-        
-        if action.name == "Equip" and add_action:
-            st.session_state['events_input'] += f" {get_event_id_by_name('EQUIP')}"
-            st.session_state['count_equips'] += 1 if who_did_the_action == 'Player' else 0
+    if add_attack_atk_low or add_attack_atk_high:
+        attack_event = 'SWIPE_ATK_LOW' if add_attack_atk_low else 'SWIPE_ATK_HIGH'
+        if was_card_destroyed == 'No':
+            add_event('LOSE_ATTACK')
+        else:
+            st.session_state['count_effective_attacks'] += 1
+        add_event(attack_event)
+        add_event('BURN')
 
-        if action.name == "Trap Triggered" and add_action:
-            st.session_state['events_input'] += f" {get_event_id_by_name('TRAP_TRIGGERED')}"
-            st.session_state['events_input'] += f" {get_event_id_by_name('BURN')}"
-            st.session_state['count_traps'] += 1 if who_did_the_action == 'Player' else 0
+    col1, col2, col3, col4 = st.columns(4, vertical_alignment='bottom')
+    add_attack_lp = col1.button('Attack LP (Alt+8)', key='action_add_btn_8', width='stretch')
+    direct_attack_damage = col2.selectbox('Direct attack damage', options=['>= 1000', '< 1000'], key='action_direct_attack_damage')
 
+    col1, col2, col3, col4 = st.columns(4, vertical_alignment='bottom')
+    
+    add_change_field = col1.button('Change Field (Alt+9)', key='action_add_btn_9', width='stretch')
+    field_type_selected = col2.selectbox('Field Type', options=['Mountain', 'Yami', 'Other'], key='action_change_field')
+    trap_triggered = col3.button('Trap Triggered (Alt+0)', key='action_add_btn_10', width='stretch')
+
+    
+
+    if trap_triggered:
+            add_event('TRAP_TRIGGERED')
+            add_event('BURN')
+            st.session_state['count_traps'] += 1    
+    if add_attack_lp:
+        add_event('DIRECT_HIGH' if direct_attack_damage == '>= 1000' else 'DIRECT_LOW')
+    if add_change_field:
+        st.session_state['count_magics'] += 1
+        add_event({'Mountain': 'FIELD_MOUNT', 'Yami': 'FIELD_YAMI', 'Other': 'FIELD_USUAL'}[field_type_selected])
+    
     events_input = st.text_input(" ",label_visibility='collapsed',placeholder="Use the buttons above to populate the events", key = "events_input")
     if events_input:
         event_ids = list(map(int, (events_input.strip().split(" "))))
@@ -437,6 +476,7 @@ with st.expander("4: Add actions"):
                 "Name": event.name
             } for event in event_history])
             st.dataframe(df_event_history, width="stretch",hide_index = True)
+
 # Section 5
 with st.expander("Duel Rank calculator (optional)"):
 
@@ -536,13 +576,39 @@ with st.expander("Duel Rank calculator (optional)"):
 
 # Section 6
 with st.expander("Last Turn"):
-    my_cards_in_field = []
+    col1,col2,col3,col4 = st.columns(4,vertical_alignment='center')    
+    battle_rank = col1.selectbox("Select the duel battle rank:", options=['SAPow','BCD','SATec'])    
+    game_mode = col2.selectbox("Select the game mode:", options=['Normal','15 Card Mod'], index=1)
+    enemy_card_position_input = col3.selectbox("Opponent's Card Position",options=["Defense","Attack"],key="is_enemy_card_in_atk")
+    opp_remaining_cards = col4.number_input(label = "Cards left in Opp's deck",value =33,min_value = 0, max_value = 35, key = 'last_turn_remaining_opp_cards')
+    is_enemy_card_in_atk = True if enemy_card_position_input == "Attack" else False        
+    if initial_seed_index is not None:
+        enemy_card = [card for card in opp_cards_to_play_order  if card.cards_left_in_opp_deck == opp_remaining_cards][0] if opp_remaining_cards > 0 else None
+        col4.write(f"- {enemy_card.name} ({enemy_card.attack}/{enemy_card.defense}) {enemy_card.guardian_star}\n\n - Strong against: {Constants.guardian_star_strong_against[enemy_card.guardian_star]}\n - Weak against: {Constants.guardian_star_weak_against[enemy_card.guardian_star]}")
+
+    drop_pool_source = (opponent_name, battle_rank)
+    if st.session_state.get('last_turn_drop_pool_source') != drop_pool_source:
+        st.session_state['last_turn_drop_pool'] = st_read_pool(opponent_name, battle_rank)
+        st.session_state['last_turn_drop_pool_source'] = drop_pool_source
+    enemy_drop_pool = st.session_state['last_turn_drop_pool']
+    enemy_drop_pool_card_ids = list(set(enemy_drop_pool)) # Unique card IDs in the drop pool
+    enemy_drop_pool_card_ids.sort()
+    enemy_drop_pool_cards = get_card_data_from_card_ids(enemy_drop_pool_card_ids)
+    col1,col2 = st.columns(2)
+    desired_drop_cards = col1.multiselect("Desired cards dropwdown:",[f"{card.cardID}: {card.name}" for card in enemy_drop_pool_cards],key='last_turn_desired_drop_cards', on_change=add_selected_drop_card_ids)
+    desired_drop_card_ids = col2.text_input("Desired card dropwdown IDs (space separated):",key='last_turn_desired_drop_card_ids')
+
+
+
+    
     if initial_seed_index is None:
         st.write('Identify initial seed index first, and then use this section for the last turn')
+
     
-    if initial_seed_index is not None:
-        game_mode_toggle = st.toggle("Are you playing with 15 Card Mod?", value=False)
-        game_mode = '15 Card Mod' if game_mode_toggle else 'Normal'
+    input_method = st.radio("Choose Input Method. Simplified Mode is quicker to use but the search is not exhaustive",["Simplified Mode", "Detailed Mode"],horizontal = True)
+
+    if initial_seed_index is not None and input_method == "Detailed Mode":        
+        my_cards_in_field = []
         for i in range(4):
             col1, col2, col3 = st.columns(3)
             selected_card_input = col1.selectbox(label = f'Field card {i + 1}',options=[f"{card['Id']}: {card['Name']}" for card in Constants.card_data if card['Type'] < 20], key=f"player_last_turn_field_card_{i}",index=None)
@@ -564,29 +630,18 @@ with st.expander("Last Turn"):
                 last_hand_card_ids.append(int(selected_card.split(":")[0]))
         hand = get_card_data_from_card_ids(last_hand_card_ids)
         
-        col1,col2,col3,col4,col5 = st.columns(5)
-        opp_remaining_cards = col1.number_input(label = "Cards left in Opp's deck",min_value = 0, max_value = 35, key = 'last_turn_remaining_opp_cards')
-        enemy_card =   [card for card in opp_cards_to_play_order  if card.cards_left_in_opp_deck == opp_remaining_cards][0] if opp_remaining_cards > 0 else None
-        enemy_card_position_input = col2.selectbox("Opponent's Card Position",options=["Defense","Attack"],key="is_enemy_card_in_atk")
-        is_enemy_card_in_atk = True if enemy_card_position_input == "Attack" else False
-        remaining_enemy_LP = col3.number_input("Opp remaining Life Points:",min_value = 0, max_value = 8000,key='last_turn_remaining_lp')
-        field_type = col4.selectbox("Field Type", options=[x[1] for x in Constants.field_types], key="last_turn_field_type")
-        field_type_id = [x[0] for x in Constants.field_types if x[1] == field_type][0]
-        battle_rank = col5.selectbox("Select the duel battle rank:", options=['SAPow','BCD','SATec'])
-        enemy_drop_pool = st_read_pool(opponent_name, battle_rank)
-        enemy_drop_pool_card_ids = list(set(enemy_drop_pool)) # Unique card IDs in the drop pool
-        enemy_drop_pool_card_ids.sort()
-        enemy_drop_pool_cards = get_card_data_from_card_ids(enemy_drop_pool_card_ids)
-        desired_drop_cards = st.multiselect("Desired cards:",[f"{card.cardID}: {card.name}" for card in enemy_drop_pool_cards],key='last_turn_desired_drop_cards')
-
+        col1,col2,col3,col4 = st.columns(4)        
+        remaining_enemy_LP = col1.number_input("Opp remaining Life Points:",min_value = 0, max_value = 8000,key='last_turn_remaining_lp')
+        field_type = col2.selectbox("Field Type", options=[x[1] for x in Constants.field_types], key="last_turn_field_type")
+        field_type_id = [x[0] for x in Constants.field_types if x[1] == field_type][0]        
         
         search = st.button("Search")
 
-        if search and (remaining_enemy_LP == 0 or not enemy_card or len(desired_drop_cards) == 0 or len(hand) < 5):
+        if search and (remaining_enemy_LP == 0 or not enemy_card or not desired_drop_card_ids or len(hand) < 5):
             st.warning("Please provide all required information.")
             
 
-        if search and remaining_enemy_LP > 0 and len(desired_drop_cards) > 0 and enemy_card and len(hand) == 5:
+        if search and remaining_enemy_LP > 0 and desired_drop_card_ids and enemy_card and len(hand) == 5:
             seed_index_at_start_of_last_turn = event_history[-1].new_seed_index
             main_phase_actions = generate_main_phase_actions(hand,my_cards_in_field,seed_index_at_start_of_last_turn,field_type_id,enemy_card)
             st.write(len(main_phase_actions), " possible Main Phase actions")
@@ -610,7 +665,7 @@ with st.expander("Last Turn"):
                     play.battle_phase_actions = battle_phase_actions                                   
                     play.calculate_drop(enemy_drop_pool)
                     #st.write(play)
-                    if int(play.drop_card.cardID) in list(map(lambda x: int(x.split(":")[0]),desired_drop_cards)):                                     
+                    if int(play.drop_card.cardID) in list(map(lambda x: int(x),desired_drop_card_ids.split(" "))):                                     
                         st.write("Found a way to get the desired drop!")
                         found_drop = True
                         break
@@ -618,6 +673,46 @@ with st.expander("Last Turn"):
             if not found_drop:
                 st.write("No possible actions found to get the desired drop. Destroy enemy card and try again next turn.")
             else: 
-                #st.write('---')
                 st.write(play)
 
+    if initial_seed_index is not None and input_method == "Simplified Mode":        
+        col1,col2,col3,col4,col5= st.columns(5)
+        max_fusions = col1.number_input("How many fusions can you make", min_value=0, max_value = 5,  value=1, key='max_fusions')
+        max_equips = col2.number_input("How many equips can you make", min_value=0, max_value = 5,  value=0, key='max_equips')        
+        max_drops = col3.number_input("How many drops can you make", min_value=0, max_value = 5,  value=3, key='max_drops')                
+        is_gs_animation_possible = col4.selectbox(label = 'Guardian Star animation possible?',options=['No','Yes'],index=0,key='is_gs_animation_possible')
+        is_gs_animation_possible = True if is_gs_animation_possible == 'Yes' else False
+        
+        search = st.button('Search')
+        if search and desired_drop_card_ids == '':
+            st.warning("Please provide desired cards.")
+        if search and desired_drop_card_ids != '':
+            try:
+                desired_drop_ids = [int(card_id) for card_id in desired_drop_card_ids.split()]
+            except ValueError:
+                st.warning("Please provide desired card IDs separated by spaces.")
+            else:
+                seed_index_at_start_of_last_turn = event_history[-1].new_seed_index
+                plays_by_drop = search_simplified_plays(
+                    seed_index_at_start_of_last_turn,
+                    game_mode,
+                    desired_drop_ids,
+                    enemy_drop_pool,
+                    max_fusions,
+                    max_equips,
+                    max_drops,
+                    is_enemy_card_in_atk,
+                    is_gs_animation_possible
+                )
+                total_plays = sum(len(plays) for plays in plays_by_drop.values())
+                if total_plays == 0:
+                    st.write("No possible actions found to get the desired drop. Destroy enemy card and try again next turn.")
+                else:
+                    st.write(f"Found {total_plays} possible action(s), with up to 10 options per desired drop.")
+                    plays = [play for drop_plays in plays_by_drop.values() for play in drop_plays]
+                    plays.sort(key=lambda play: (sum(play.main_phase_action.action_counts), play.main_phase_action.action_counts))
+                    for play in plays:
+                        num_fusions, num_equips, num_drops = play.main_phase_action.action_counts
+                        title = f"Fusions: {num_fusions}, Drops: {num_drops}, Equips: {num_equips} - {play.drop_card.cardID}: {play.drop_card.name}"
+                        with st.expander(title):
+                            st.text(str(play))
