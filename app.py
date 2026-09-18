@@ -695,19 +695,21 @@ with st.expander("4: Last Turn"):
             else: 
                 st.write(play)
 
-    if initial_seed_index is not None and input_method == "Simplified Mode":        
-        col1, col2, col3, col4, col5, col6, col7 = st.columns([1, 1, 1, 1.5, 1.2, 1.2, 1.8], vertical_alignment='bottom')
-        max_fusions = col1.number_input("How many fusions can you make", min_value=0, max_value = 5,  value=1, key='max_fusions')
-        max_equips = col2.number_input("How many equips can you make", min_value=0, max_value = 5,  value=0, key='max_equips')        
-        max_drops = col3.number_input("How many drops can you make", min_value=0, max_value = 5,  value=3, key='max_drops')                
-        is_gs_animation_possible = col4.selectbox(label = 'Guardian Star animation possible?',options=['No','Yes'],index=0,key='is_gs_animation_possible')
-        is_gs_animation_possible = True if is_gs_animation_possible == 'Yes' else False
-        simplified_enemy_card_position = col5.selectbox("Opponent's Card Position", options=["Defense", "Attack"], key='last_turn_simplified_enemy_card_position')
-        simplified_opp_remaining_cards = col6.number_input("Cards left in Opp's deck", value=33, min_value=1, max_value=35, key='last_turn_simplified_remaining_opp_cards')
-        is_simplified_enemy_card_in_atk = simplified_enemy_card_position == "Attack"
+    if initial_seed_index is not None and input_method == "Simplified Mode":  
+        col1,col2 = st.columns([1,3], vertical_alignment='bottom')
+        simplified_opp_remaining_cards = col1.number_input("Cards left in Opp's deck", value=33, min_value=1, max_value=35, key='last_turn_simplified_remaining_opp_cards')
         simplified_enemy_card = next((card for card in opp_cards_to_play_order if card.cards_left_in_opp_deck == simplified_opp_remaining_cards), None)
         if simplified_enemy_card:
-            col7.write(f"{simplified_enemy_card.name} ({simplified_enemy_card.attack}/{simplified_enemy_card.defense}) {simplified_enemy_card.guardian_star}")
+            col2.write(f"{simplified_enemy_card.name} ({simplified_enemy_card.attack}/{simplified_enemy_card.defense}) {simplified_enemy_card.guardian_star} (👍{Constants.guardian_star_weak_against[simplified_enemy_card.guardian_star]} /👎{Constants.guardian_star_strong_against[simplified_enemy_card.guardian_star]})") 
+        col1, col2, col3, col4, col5 = st.columns(5, vertical_alignment='bottom')
+        max_fusions = col1.number_input("# Fusions", min_value=0, max_value = 5,  value=1, key='max_fusions',help="Max number of fusions you can make")
+        max_equips = col2.number_input("# Equips", min_value=0, max_value = 5,  value=0, key='max_equips', help="Max number of equips you can make")        
+        max_drops = col3.number_input("# Drops", min_value=0, max_value = 5,  value=3, key='max_drops', help="Max number of drops you can make")
+        is_gs_animation_possible = col4.selectbox(label = 'GS anim possible?', help="Can the Guardian Star animation be triggered?", options=['No','Yes'],index=0,key='is_gs_animation_possible')
+        is_gs_animation_possible = True if is_gs_animation_possible == 'Yes' else False
+        simplified_enemy_card_position = col5.selectbox("Opp Card Position", options=["Defense", "Attack"], key='last_turn_simplified_enemy_card_position')
+        is_simplified_enemy_card_in_atk = simplified_enemy_card_position == "Attack"
+        
         
         search = st.button('Search')
         if search and desired_drop_card_ids == '':
