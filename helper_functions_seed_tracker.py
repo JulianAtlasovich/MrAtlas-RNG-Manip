@@ -5,11 +5,21 @@ from db_queries import *
 import copy
 from itertools import permutations, product
 from datetime import datetime
+from contextlib import contextmanager
+from contextvars import ContextVar
 import streamlit as st
 
-@st.cache_data(ttl=600)
-def setup_load_db_to_memory_st(seed_index):
-  Constants.load_dbs_to_memory(seed_index) # for performance reasons load dbs to memory only once
+# @st.cache_data(ttl=1200)
+# def setup_load_db_to_memory_st(seed_index):
+#   Constants.load_dbs_to_memory(seed_index) # for performance reasons load dbs to memory only once
+
+VARIABLE_ANIMATION_IDS = {
+  'BURN': 1,
+  'BURN_3D': 2,
+  'GS_ANIM': 13
+}
+SEARCH_VARIABLE_ADVANCEMENT_CACHE_SIZE = 40000
+variable_advancement_cache = ContextVar('variable_advancement_cache', default=None)
 
 @st.cache_data()
 def get_list_of_opponent_names_st(): # to cache opponent names
@@ -134,7 +144,24 @@ def get_event_by_id(event_id):
   return Constants.events[event_id]
 
 def get_variable_advancement_from_event(seed_index,anim_name):
-  return Constants.variable_anim_steps[anim_name][seed_index]
+  cached_steps = variable_advancement_cache.get()
+  if cached_steps is not None:
+    advancement = cached_steps[anim_name].get(seed_index)
+    if advancement is not None:
+      return advancement
+  return get_variable_anim_steps_from_db(seed_index, VARIABLE_ANIMATION_IDS[anim_name])
+
+@contextmanager
+def cache_variable_advancements_for_search(seed_index):
+  cached_steps = get_variable_anim_steps_range_from_db(
+    seed_index,
+    SEARCH_VARIABLE_ADVANCEMENT_CACHE_SIZE
+  )
+  cache_token = variable_advancement_cache.set(cached_steps)
+  try:
+    yield
+  finally:
+    variable_advancement_cache.reset(cache_token)
 
 
 def get_index_positions(list_of_elems, element):

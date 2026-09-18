@@ -95,6 +95,23 @@ def get_variable_anim_steps_from_db(index,anim_id):
     finally:
         conn.close()
 
+def get_variable_anim_steps_range_from_db(initial_seed_index, seed_count):
+    variable_animations = {
+        'BURN': 1,
+        'BURN_3D': 2,
+        'GS_ANIM': 13
+    }
+    last_seed_index = initial_seed_index + seed_count - 1
+    with sqlite3.connect("AnimationDatabase.db") as conn:
+        return {
+            animation_name: dict(conn.execute(
+                'select InitialSeedIndex, AdvanceSize from VariableAdvs '
+                'where AnimationID = ? and InitialSeedIndex between ? and ?',
+                (animation_id, initial_seed_index, last_seed_index)
+            ).fetchall())
+            for animation_name, animation_id in variable_animations.items()
+        }
+
 def find_fusion_db_old(card1,card2):
     try:
         conn = sqlite3.connect("FmDatabaseWithGS.db")

@@ -349,17 +349,17 @@ class Constants:
   card_equips = get_equips_db()
   #fusions = {}
   #variable_anim_steps = {}
-  @classmethod
-  def load_dbs_to_memory(cls,initial_seed_index):
-    cls.variable_anim_steps = {}
-    seeds_to_consider = 200000
-    animation_db_cursor = (sqlite3.connect('AnimationDatabase.db')).cursor()
-    query = 'select InitialSeedIndex,AdvanceSize from VariableAdvs where AnimationID = {} and InitialSeedIndex between {} and {}'.format(1,initial_seed_index,initial_seed_index+seeds_to_consider)
-    cls.variable_anim_steps['BURN'] = dict(animation_db_cursor.execute(query).fetchall())
-    query = 'select InitialSeedIndex,AdvanceSize from VariableAdvs where AnimationID = {} and InitialSeedIndex between {} and {}'.format(2,initial_seed_index,initial_seed_index+seeds_to_consider)
-    cls.variable_anim_steps['BURN_3D'] = dict(animation_db_cursor.execute(query).fetchall())
-    query = 'select InitialSeedIndex,AdvanceSize from VariableAdvs where AnimationID = {} and InitialSeedIndex between {} and {}'.format(13,initial_seed_index,initial_seed_index+seeds_to_consider)
-    cls.variable_anim_steps['GS_ANIM'] = dict(animation_db_cursor.execute(query).fetchall())
+  # @classmethod
+  # def load_dbs_to_memory(cls,initial_seed_index):
+  #   cls.variable_anim_steps = {}
+  #   seeds_to_consider = 400000
+  #   animation_db_cursor = (sqlite3.connect('AnimationDatabase.db')).cursor()
+  #   query = 'select InitialSeedIndex,AdvanceSize from VariableAdvs where AnimationID = {} and InitialSeedIndex between {} and {}'.format(1,initial_seed_index,initial_seed_index+seeds_to_consider)
+  #   cls.variable_anim_steps['BURN'] = dict(animation_db_cursor.execute(query).fetchall())
+  #   query = 'select InitialSeedIndex,AdvanceSize from VariableAdvs where AnimationID = {} and InitialSeedIndex between {} and {}'.format(2,initial_seed_index,initial_seed_index+seeds_to_consider)
+  #   cls.variable_anim_steps['BURN_3D'] = dict(animation_db_cursor.execute(query).fetchall())
+  #   query = 'select InitialSeedIndex,AdvanceSize from VariableAdvs where AnimationID = {} and InitialSeedIndex between {} and {}'.format(13,initial_seed_index,initial_seed_index+seeds_to_consider)
+  #   cls.variable_anim_steps['GS_ANIM'] = dict(animation_db_cursor.execute(query).fetchall())
 
 Constants.opponents_strongest_card_description = {
   opponent_id: "\n".join(

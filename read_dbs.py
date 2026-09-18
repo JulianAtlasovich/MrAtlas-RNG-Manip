@@ -36,7 +36,6 @@ class PoolType(Enum):
 
 
 def read_pool(opp_name, pool_type):
-    print(datetime.now(),"Loading opponent pool...")
     conn = sqlite3.connect('FmDatabaseWithGS.db')
     c = conn.cursor()
 
