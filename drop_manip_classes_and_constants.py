@@ -420,7 +420,7 @@ class Main_phase_action:
     return self.card_result.cardID == other.card_result.cardID and self.seed_index_delta == other.seed_index_delta and self.card_result.guardian_star == other.card_result.guardian_star and self.my_cards_in_field == other.my_cards_in_field
 
   def __str__(self):
-    return "current_seed_index: {}, seed_index_delta: {},card result: {},description: {}\n".format(self.seed_index,self.seed_index_delta, self.card_result.name ,self.description)
+    return "{}. seed index: {}, delta: {}\n".format(self.description, self.seed_index,self.seed_index_delta)
 
 class Battle_phase_action:
   def __init__(self):
@@ -430,7 +430,7 @@ class Battle_phase_action:
     self.action_type = ''
 
   def __str__(self):
-    return "{}. current_seed_index: {}, seed_index_delta: {},\n".format(self.description, self.current_seed_index,self.seed_index_delta)
+    return "{}. seed index: {}, delta: {}\n".format(self.description, self.current_seed_index,self.seed_index_delta)
 
 class Play:
   def __init__(self, seed_index, game_mode='Normal (Vanilla)'):   
@@ -470,8 +470,7 @@ class Play:
     text = '{}'.format(self.main_phase_action)
     for bpa in self.battle_phase_actions:
       text+='{}'.format(str(bpa))
-    text+='end of duel: seed_index_delta: {}, current_seed_index {}\n'.format(Constants.anims_steps_adv['END_OF_DUEL_15_CARD_MOD'] if self.game_mode == '15 Card Mod' else Constants.anims_steps_adv['END_OF_DUEL'],self.final_seed_index)
-    text+='drop_name: {},dropID: {}\n'.format(self.drop_card.name,self.drop_card.cardID)
+    text+='{}: {}'.format(self.drop_card.cardID,self.drop_card.name)
     return text
 
   def __eq__(self, other):
