@@ -337,6 +337,34 @@ def can_card_be_equipped(card1,card2):
     return False
 
 
+def get_strongest_fusions_from_hand(hand, result_count=3):
+  results = []
+
+  for fusion_combination in Constants.fusion_combinations:
+    if len(fusion_combination) < 2 or max(fusion_combination) >= len(hand):
+      continue
+
+    card_to_play = copy.deepcopy(hand[fusion_combination[0]])
+    has_valid_combination = False
+    for card_index in fusion_combination[1:]:
+      next_card = copy.deepcopy(hand[card_index])
+      fusion_result, fusion_succeeded = find_fusion(card_to_play, next_card)
+      if fusion_succeeded:
+        card_to_play = fusion_result
+        has_valid_combination = True
+      elif can_card_be_equipped(card_to_play, next_card):
+        card_to_play = equip_card(card_to_play, next_card)
+        has_valid_combination = True
+      else:
+        card_to_play = result_from_failed_fusion(card_to_play, next_card)
+
+    if has_valid_combination:
+      results.append((fusion_combination, card_to_play))
+
+  results.sort(key=lambda result: result[1].attack, reverse=True)
+  return results[:result_count]
+
+
 
 def make_best_fusion_from_hand(hand_ids):
   hand = get_card_data_from_card_ids(hand_ids)

@@ -20,40 +20,46 @@ def enable_action_shortcuts():
                 """
                 <script>
                 const shortcutButtons = {
-                    "1": "Dump (Alt+1)",
-                    "2": "Fusion (Alt+2)",
-                    "3": "Equip (Alt+3)",
-                    "4": "G. Star Anim (Alt+4)",
-                    "5": "Attack Card DEF (Alt+5)",
-                    "6": "Attack Card ATK <1k (Alt+6)",
-                    "7": "Attack Card ATK >=1k (Alt+7)",
-                    "8": "Attack LP (Alt+8)",
-                    "9": "Change Field (Alt+9)",
-                    "0": "Trap Triggered (Alt+0)"
+                    "Digit1": "Dump (Alt+1)",
+                    "Digit2": "Fusion (Alt+2)",
+                    "Digit3": "Equip (Alt+3)",
+                    "Digit4": "G. Star Anim (Alt+4)",
+                    "Digit5": "Attack card in DEF (Alt+5)",
+                    "Digit6": "Attack card ATK <1000 (Alt+6)",
+                    "Digit7": "Attack card ATK >=1000 (Alt+7)",                    
+                    "Digit8": "Attack LP (Alt+8)",
+                    "Digit9": "Change Field (Alt+9)",
+                    "Digit0": "Trap Triggered (Alt+0)"
                 };
 
                 const parentDocument = window.parent.document;
-                if (!window.parent.atlasActionShortcutsInstalled) {
-                    window.parent.atlasActionShortcutsInstalled = true;
-                    parentDocument.addEventListener("keydown", (event) => {
-                        if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || event.repeat) {
-                            return;
-                        }
-
-                        const buttonLabel = shortcutButtons[event.key];
-                        if (!buttonLabel) {
-                            return;
-                        }
-
-                        const button = Array.from(parentDocument.querySelectorAll("button")).find(
-                            (candidate) => candidate.innerText.trim() === buttonLabel
-                        );
-                        if (button) {
-                            event.preventDefault();
-                            button.click();
-                        }
-                    }, true);
+                if (window.parent.atlasActionShortcutHandler) {
+                    parentDocument.removeEventListener("keydown", window.parent.atlasActionShortcutHandler, true);
                 }
+
+                const shortcutHandler = (event) => {
+                    if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || event.repeat) {
+                        return;
+                    }
+
+                    const shortcutKey = event.code.startsWith("Numpad")
+                        ? `Digit${event.code.slice("Numpad".length)}`
+                        : event.code;
+                    const buttonLabel = shortcutButtons[shortcutKey];
+                    if (!buttonLabel) {
+                        return;
+                    }
+
+                    const button = Array.from(parentDocument.querySelectorAll("button")).find(
+                        (candidate) => candidate.innerText.trim() === buttonLabel
+                    );
+                    if (button) {
+                        event.preventDefault();
+                        button.click();
+                    }
+                };
+                window.parent.atlasActionShortcutHandler = shortcutHandler;
+                parentDocument.addEventListener("keydown", shortcutHandler, true);
                 </script>
                 """,
                 height=1,
@@ -87,7 +93,7 @@ with st.expander("Tool Guide"):
     
 
 # Section 1
-with st.expander("1 Your Deck"):
+with st.expander("1: Your Deck"):
     button_text = 'Load sample deck' if localS.getItem('player_deck_input') is None else 'Load your deck'
     if st.button(button_text):
         if localS.getItem('player_deck_input'):
@@ -137,7 +143,10 @@ if st.button('Reset duel',key="reset_duel"):
     st.session_state['player_last_turn_field_card_3'] = None
     for i in range(5):
         st.session_state[f'player_last_turn_card_{i}'] = None
-    st.session_state['last_turn_remaining_opp_cards'] = 33
+    st.session_state['last_turn_standard_remaining_opp_cards'] = 33
+    st.session_state['last_turn_simplified_remaining_opp_cards'] = 33
+    st.session_state['last_turn_standard_enemy_card_position'] = 'Defense'
+    st.session_state['last_turn_simplified_enemy_card_position'] = 'Defense'
     st.session_state['last_turn_remaining_lp'] = 0
     st.session_state['last_turn_desired_drop_cards'] = []
     st.session_state['show_first_opponent_card'] = False
@@ -148,7 +157,7 @@ if st.button('Reset duel',key="reset_duel"):
 
 
 # Section 2
-with st.expander("2 Identify the seed"):
+with st.expander("2: Identify the seed"):
     duelists = get_list_of_opponent_names_st()
     min_seed_index, max_seed_index,load_sample_deck_order = st.columns([1.5,1.5,1], vertical_alignment="bottom")
     load_sample_deck_order = load_sample_deck_order.checkbox("Load Sample Deck Order")
@@ -267,7 +276,7 @@ with st.expander("2 Identify the seed"):
                     break
         
     if len(possible_seed_indexes)==0 and len(selected_player_cards)>=5:
-        st.write(':red[No possible seed indexes found with that shuffling order. Review your card selection. Remember to reset your console before each duel]')
+        st.write(':red[No possible seed indexes found with that shuffling order].\n\n Make sure you enter duel in deck numerical order. Review your card selection. Remember to reset your console before each duel]')
     if len(possible_seed_indexes)>=1:                
         st.session_state['list_of_possible_opp_decks'] = []
         st.session_state['list_of_possible_player_decks'] = []
@@ -313,7 +322,7 @@ with st.expander("2 Identify the seed"):
 
 
 # Section 3
-with st.expander("3: Player and Opponent Deck (informational, no action needed)"):
+with st.expander("Player and Opponent Deck (Informational, no action needed)"):
     if possible_seed_indexes is None or len(possible_seed_indexes) == 0:
         st.write("Please enter your hand to see your's and opponent's shuffled deck.")
 
@@ -346,7 +355,7 @@ with st.expander("3: Player and Opponent Deck (informational, no action needed)"
 
 
 # Section 4
-with st.expander("4: Add actions"):
+with st.expander("3: Add actions"):
     if 'count_fusions' not in st.session_state:
         st.session_state['count_fusions'] = 0
     if 'count_traps' not in st.session_state:
@@ -376,27 +385,42 @@ with st.expander("4: Add actions"):
         st.session_state['count_fusions'] += 1
     if add_gs_animation:
         add_event('GS_ANIM')
-
     col1, col2, col3, col4 = st.columns(4, vertical_alignment='bottom')
-    add_attack_def = col1.button('Attack Card DEF (Alt+5)', key='action_add_btn_5', width='stretch')
-    add_attack_atk_low = col2.button('Attack Card ATK <1k (Alt+6)', key='action_add_btn_6', width='stretch')
-    add_attack_atk_high = col3.button('Attack Card ATK >=1k (Alt+7)', key='action_add_btn_7', width='stretch')
-    was_card_destroyed = col4.selectbox('Attacked Card destroyed?', options=['Yes', 'No'], key='action_attack_destroyed')
+    add_attack_def = col1.button('Attack card in DEF (Alt+5)', key='action_add_btn_5', width='stretch')
+    was_def_card_destroyed = col2.selectbox('Attacked Card destroyed?', options=['Yes', 'No'], key='action_def_card_destroyed')
+    if was_def_card_destroyed == 'No':
+        def_attack_damage_to_lp = col3.selectbox('Damage to LP', options=['<1000', '>=1000', '0'], key='action_def_damage_to_lp')
 
     if add_attack_def:
-        if was_card_destroyed == 'Yes':
+        if was_def_card_destroyed == 'Yes':
             add_event('SWIPE_DEF')
             add_event('BURN')
         else:
             add_event('LOSE_ATTACK')
+            if def_attack_damage_to_lp == '<1000':
+                add_event('DIRECT_LOW')
+            elif def_attack_damage_to_lp == '>=1000':
+                add_event('DIRECT_HIGH')
 
-    if add_attack_atk_low or add_attack_atk_high:
-        attack_event = 'SWIPE_ATK_LOW' if add_attack_atk_low else 'SWIPE_ATK_HIGH'
-        if was_card_destroyed == 'No':
+    col1, col2, col3, col4 = st.columns(4, vertical_alignment='bottom')
+    add_attack_atk_low = col1.button('Attack card ATK <1000 (Alt+6)', key='action_add_btn_6', width='stretch')
+    add_attack_atk_high = col2.button('Attack card ATK >=1000 (Alt+7)', key='action_add_btn_7', width='stretch')
+    was_atk_card_destroyed = col3.selectbox('Attacked Card destroyed?', options=['Yes', 'No'], key='action_atk_card_destroyed')
+    add_attack_atk_tie = col4.button('Attack card ATK tie', key='action_add_btn_atk_tie', help='Attack card in ATK: tie (0 damage)', width='stretch')
+
+    if add_attack_atk_high or add_attack_atk_low:
+        attack_event = 'SWIPE_ATK_HIGH' if add_attack_atk_high else 'SWIPE_ATK_LOW'
+        if was_atk_card_destroyed == 'No':
             add_event('LOSE_ATTACK')
         else:
             st.session_state['count_effective_attacks'] += 1
         add_event(attack_event)
+        add_event('BURN')
+
+    if add_attack_atk_tie:
+        add_event('SWIPE_DEF')
+        add_event('BURN')
+        add_event('SWIPE_DEF')
         add_event('BURN')
 
     col1, col2, col3, col4 = st.columns(4, vertical_alignment='bottom')
@@ -476,115 +500,109 @@ with st.expander("4: Add actions"):
             } for event in event_history])
             st.dataframe(df_event_history, width="stretch",hide_index = True)
 
+
 # Section 5
-with st.expander("Duel Rank calculator (optional)"):
+# with st.expander("Duel Rank calculator (optional)"):
 
-    st.info('''
-• Defensive wins: Player's card in Def mode is attacked and not destroyed.\n
-• Effective Attacks: Opponent card in atk mode is destroyed.\n
-• The checkbox freezes the value, so the reset button doesn't reset it.\n
-• The numbers after the labels are the values that change the duel rank points.'''        
-    )
-    # Initialize session_state only if not present
-    for k in Constants.duel_rank_keys:
-        if k not in st.session_state:
-            st.session_state[k] = Constants.duel_rank_defaults[k]
-        # Add a keep checkbox for each input
-        keep_key = f'keep_{k}'
-        if keep_key not in st.session_state:
-            st.session_state[keep_key] = False
+#     st.info('''
+# • Defensive wins: Player's card in Def mode is attacked and not destroyed.\n
+# • Effective Attacks: Opponent card in atk mode is destroyed.\n
+# • The checkbox freezes the value, so the reset button doesn't reset it.\n
+# • The numbers after the labels are the values that change the duel rank points.'''        
+#     )
+#     # Initialize session_state only if not present
+#     for k in Constants.duel_rank_keys:
+#         if k not in st.session_state:
+#             st.session_state[k] = Constants.duel_rank_defaults[k]
+#         # Add a keep checkbox for each input
+#         keep_key = f'keep_{k}'
+#         if keep_key not in st.session_state:
+#             st.session_state[keep_key] = False
 
-    reset_rank_calculator = st.button('reset', key='reset_rank_calculator')
-    if reset_rank_calculator:
-        for k in Constants.duel_rank_keys:
-            keep_key = f'keep_{k}'
-            if not st.session_state[keep_key]:
-                st.session_state[k] = Constants.duel_rank_defaults[k]
+#     reset_rank_calculator = st.button('reset', key='reset_rank_calculator')
+#     if reset_rank_calculator:
+#         for k in Constants.duel_rank_keys:
+#             keep_key = f'keep_{k}'
+#             if not st.session_state[keep_key]:
+#                 st.session_state[k] = Constants.duel_rank_defaults[k]
 
-    with st.form("duel_rank_calculator_form",enter_to_submit=False,border=False):
-        col1, col2 = st.columns(2)
-        with col1:
-            cb, inp = st.columns([1, 30])
-            cb.write(" ")  # spacer for alignment
-            cb.write(" ")
-            cb.checkbox(" ", key='keep_num_fusions', label_visibility='collapsed')
-            inp.number_input("Fusions (1,5,10,15)", min_value=0, key='num_fusions')
-            cb, inp = st.columns([1, 30])
-            cb.write(" ")
-            cb.write(" ")
-            cb.checkbox(" ", key='keep_num_magics', label_visibility="collapsed")
-            inp.number_input("Magics (1,4,7,10)", min_value=0, key='num_magics')
-            cb, inp = st.columns([1, 30])
-            cb.write(" ")
-            cb.write(" ")
-            cb.checkbox(" ", key='keep_num_equips', label_visibility="collapsed")
-            inp.number_input("Equips (1,5,10,15)", min_value=0, key='num_equips')
-            cb, inp = st.columns([1, 30])
-            cb.write(" ")
-            cb.write(" ")
-            cb.checkbox(" ", key='keep_num_cards_left', label_visibility="collapsed")
-            inp.number_input("Cards left in your deck [complement of cards used] (31,27,7,3)", min_value=0, key='num_cards_left')
-            cb, inp = st.columns([1, 30])
-            cb.write(" ")
-            cb.write(" ")
-            cb.checkbox(" ", key='keep_num_facedowns', label_visibility="collapsed")
-            inp.number_input("Facedowns (1,11,21,31)", min_value=0, key='num_facedowns')
-        with col2:
-            cb, inp = st.columns([1, 30])
-            cb.write(" ")
-            cb.write(" ")
-            cb.checkbox(" ", key='keep_num_traps', label_visibility="collapsed")
-            inp.number_input("Traps (1,3,5,7)", min_value=0, key='num_traps')
-            cb, inp = st.columns([1, 30])
-            cb.write(" ")
-            cb.write(" ")
-            cb.checkbox(" ", key='keep_remaining_lp', label_visibility="collapsed")
-            inp.selectbox("Remaining Life Points",options=['8000','7000 - 7999','1000 - 6999','100 - 999','< 100'],key='remaining_lp')
-            cb, inp = st.columns([1, 30])
-            cb.write(" ")
-            cb.write(" ")
-            cb.checkbox(" ", key='keep_num_opp_cards_left', label_visibility="collapsed")
-            inp.number_input("Opponent cards left [complement of num of turns] (31,27,7,3)", min_value=0, key='num_opp_cards_left') # 9 turns equal 27 cards left in opp deck
-            cb, inp = st.columns([1, 30])
-            cb.write(" ")
-            cb.write(" ")
-            cb.checkbox(" ", key='keep_num_defensive_wins', label_visibility="collapsed")
-            inp.number_input("Defensive wins (2,6,10,15) ", min_value=0, key='num_defensive_wins')
-            cb, inp = st.columns([1, 30])
-            cb.write(" ")
-            cb.write(" ")
-            cb.checkbox(" ", key='keep_num_effectives', label_visibility="collapsed")
-            inp.number_input("Effective attacks (2,4,10,20) ", min_value=0, key='num_effectives')
+#     with st.form("duel_rank_calculator_form",enter_to_submit=False,border=False):
+#         col1, col2 = st.columns(2)
+#         with col1:
+#             cb, inp = st.columns([1, 30])
+#             cb.write(" ")  # spacer for alignment
+#             cb.write(" ")
+#             cb.checkbox(" ", key='keep_num_fusions', label_visibility='collapsed')
+#             inp.number_input("Fusions (1,5,10,15)", min_value=0, key='num_fusions')
+#             cb, inp = st.columns([1, 30])
+#             cb.write(" ")
+#             cb.write(" ")
+#             cb.checkbox(" ", key='keep_num_magics', label_visibility="collapsed")
+#             inp.number_input("Magics (1,4,7,10)", min_value=0, key='num_magics')
+#             cb, inp = st.columns([1, 30])
+#             cb.write(" ")
+#             cb.write(" ")
+#             cb.checkbox(" ", key='keep_num_equips', label_visibility="collapsed")
+#             inp.number_input("Equips (1,5,10,15)", min_value=0, key='num_equips')
+#             cb, inp = st.columns([1, 30])
+#             cb.write(" ")
+#             cb.write(" ")
+#             cb.checkbox(" ", key='keep_num_cards_left', label_visibility="collapsed")
+#             inp.number_input("Cards left in your deck [complement of cards used] (31,27,7,3)", min_value=0, key='num_cards_left')
+#             cb, inp = st.columns([1, 30])
+#             cb.write(" ")
+#             cb.write(" ")
+#             cb.checkbox(" ", key='keep_num_facedowns', label_visibility="collapsed")
+#             inp.number_input("Facedowns (1,11,21,31)", min_value=0, key='num_facedowns')
+#         with col2:
+#             cb, inp = st.columns([1, 30])
+#             cb.write(" ")
+#             cb.write(" ")
+#             cb.checkbox(" ", key='keep_num_traps', label_visibility="collapsed")
+#             inp.number_input("Traps (1,3,5,7)", min_value=0, key='num_traps')
+#             cb, inp = st.columns([1, 30])
+#             cb.write(" ")
+#             cb.write(" ")
+#             cb.checkbox(" ", key='keep_remaining_lp', label_visibility="collapsed")
+#             inp.selectbox("Remaining Life Points",options=['8000','7000 - 7999','1000 - 6999','100 - 999','< 100'],key='remaining_lp')
+#             cb, inp = st.columns([1, 30])
+#             cb.write(" ")
+#             cb.write(" ")
+#             cb.checkbox(" ", key='keep_num_opp_cards_left', label_visibility="collapsed")
+#             inp.number_input("Opponent cards left [complement of num of turns] (31,27,7,3)", min_value=0, key='num_opp_cards_left') # 9 turns equal 27 cards left in opp deck
+#             cb, inp = st.columns([1, 30])
+#             cb.write(" ")
+#             cb.write(" ")
+#             cb.checkbox(" ", key='keep_num_defensive_wins', label_visibility="collapsed")
+#             inp.number_input("Defensive wins (2,6,10,15) ", min_value=0, key='num_defensive_wins')
+#             cb, inp = st.columns([1, 30])
+#             cb.write(" ")
+#             cb.write(" ")
+#             cb.checkbox(" ", key='keep_num_effectives', label_visibility="collapsed")
+#             inp.number_input("Effective attacks (2,4,10,20) ", min_value=0, key='num_effectives')
 
         
-        if st.form_submit_button("Recalculate Duel Rank"):
-            duel_rank_points, duel_rank = calculate_duel_rank(
-                st.session_state['num_fusions'],
-                st.session_state['num_effectives'],
-                st.session_state['num_facedowns'],
-                st.session_state['num_magics'],
-                st.session_state['num_equips'],
-                st.session_state['num_traps'],
-                40 - st.session_state['num_cards_left'], #To Do: verify this is a correct way to calculate used cards
-                36 - st.session_state['num_opp_cards_left'], #To Do: verify this is a correct way to calculate number of turns
-                st.session_state['num_defensive_wins'],
-                st.session_state['remaining_lp']
-            )
-            st.write("Duel Rank Points:", duel_rank_points)
-            st.write("Duel Rank:", duel_rank)
+#         if st.form_submit_button("Recalculate Duel Rank"):
+#             duel_rank_points, duel_rank = calculate_duel_rank(
+#                 st.session_state['num_fusions'],
+#                 st.session_state['num_effectives'],
+#                 st.session_state['num_facedowns'],
+#                 st.session_state['num_magics'],
+#                 st.session_state['num_equips'],
+#                 st.session_state['num_traps'],
+#                 40 - st.session_state['num_cards_left'], #To Do: verify this is a correct way to calculate used cards
+#                 36 - st.session_state['num_opp_cards_left'], #To Do: verify this is a correct way to calculate number of turns
+#                 st.session_state['num_defensive_wins'],
+#                 st.session_state['remaining_lp']
+#             )
+#             st.write("Duel Rank Points:", duel_rank_points)
+#             st.write("Duel Rank:", duel_rank)
 
 # Section 6
-with st.expander("Last Turn"):
-    col1,col2,col3,col4 = st.columns(4,vertical_alignment='center')    
-    battle_rank = col1.selectbox("Select the duel battle rank:", options=['SAPow','BCD','SATec'])    
-    game_mode = col2.selectbox("Select the game mode:", options=['Normal','15 Card Mod'], index=1)
-    enemy_card_position_input = col3.selectbox("Opponent's Card Position",options=["Defense","Attack"],key="is_enemy_card_in_atk")
-    opp_remaining_cards = col4.number_input(label = "Cards left in Opp's deck",value =33,min_value = 0, max_value = 35, key = 'last_turn_remaining_opp_cards')
-    is_enemy_card_in_atk = True if enemy_card_position_input == "Attack" else False        
-    if initial_seed_index is not None:
-        enemy_card = [card for card in opp_cards_to_play_order  if card.cards_left_in_opp_deck == opp_remaining_cards][0] if opp_remaining_cards > 0 else None
-        col4.write(f"- {enemy_card.name} ({enemy_card.attack}/{enemy_card.defense}) {enemy_card.guardian_star}\n\n - Strong against: {Constants.guardian_star_strong_against[enemy_card.guardian_star]}\n - Weak against: {Constants.guardian_star_weak_against[enemy_card.guardian_star]}")
-
+with st.expander("4: Last Turn"):
+    col1,col2,col3,col4 = st.columns([1,1,2,1],vertical_alignment='center')    
+    battle_rank = col1.selectbox("Duel battle rank:", options=['SAPow','BCD','SATec'])    
+    game_mode = col2.selectbox("Game mode:", options=['Normal (Vanilla)','15 Card Mod'], index=1)
     drop_pool_source = (opponent_name, battle_rank)
     if st.session_state.get('last_turn_drop_pool_source') != drop_pool_source:
         st.session_state['last_turn_drop_pool'] = st_read_pool(opponent_name, battle_rank)
@@ -593,13 +611,10 @@ with st.expander("Last Turn"):
     enemy_drop_pool_card_ids = list(set(enemy_drop_pool)) # Unique card IDs in the drop pool
     enemy_drop_pool_card_ids.sort()
     enemy_drop_pool_cards = get_card_data_from_card_ids(enemy_drop_pool_card_ids)
-    col1,col2 = st.columns(2)
-    desired_drop_cards = col1.multiselect("Desired cards dropwdown:",[f"{card.cardID}: {card.name}" for card in enemy_drop_pool_cards],key='last_turn_desired_drop_cards', on_change=add_selected_drop_card_ids)
-    desired_drop_card_ids = col2.text_input("Desired card dropwdown IDs (space separated):",key='last_turn_desired_drop_card_ids')
+    desired_drop_cards = col3.multiselect("Desired cards dropwdown:",[f"{card.cardID}: {card.name}" for card in enemy_drop_pool_cards],key='last_turn_desired_drop_cards', on_change=add_selected_drop_card_ids)
+    desired_drop_card_ids = col4.text_input("Desired card IDs:",key='last_turn_desired_drop_card_ids',help="Enter ids space separated")
 
 
-
-    
     if initial_seed_index is None:
         st.write('Identify initial seed index first, and then use this section for the last turn')
 
@@ -609,12 +624,12 @@ with st.expander("Last Turn"):
     if initial_seed_index is not None and input_method == "Standard Mode":        
         my_cards_in_field = []
         for i in range(4):
-            col1, col2, col3 = st.columns(3)
+            col1, col2, col3, col4, col5 = st.columns(5)
             selected_card_input = col1.selectbox(label = f'Field card {i + 1}',options=[f"{card['Id']}: {card['Name']}" for card in Constants.card_data if card['Type'] < 20], key=f"player_last_turn_field_card_{i}",index=None)
             if selected_card_input:
-                num_equips = col3.number_input(f" Number of equips applied (Megamorph adds 2)",min_value=0, max_value=10, key=f"eq_{i}")
+                num_equips = col3.number_input(f" Num of equips",min_value=0, max_value=10, key=f"eq_{i}", help="Megamorph adds 2 to the count")
                 card = get_card_data_from_card_ids([int(selected_card_input.split(":")[0])])[0]
-                guardian_star = col2.selectbox(f"Guardian Star for {card.name}", options=card.guardian_stars, key=f"gs_{i}")
+                guardian_star = col2.selectbox(f"Guardian Star", options=card.guardian_stars, key=f"gs_{i}")
                 card.guardian_star = guardian_star
                 card = add_equips(card,num_equips)
                 my_cards_in_field.append(card)
@@ -629,10 +644,16 @@ with st.expander("Last Turn"):
                 last_hand_card_ids.append(int(selected_card.split(":")[0]))
         hand = get_card_data_from_card_ids(last_hand_card_ids)
         
-        col1,col2,col3,col4 = st.columns(4)        
-        remaining_enemy_LP = col1.number_input("Opp remaining Life Points:",min_value = 0, max_value = 8000,key='last_turn_remaining_lp')
-        field_type = col2.selectbox("Field Type", options=[x[1] for x in Constants.field_types], key="last_turn_field_type")
+        col1, col2, col3, col4, col5 = st.columns(5, vertical_alignment='bottom')
+        field_type = col1.selectbox("Field Type", options=[x[1] for x in Constants.field_types], key="last_turn_field_type")
+        remaining_enemy_LP = col2.number_input("Opp Life Points",min_value = 0, max_value = 8000,key='last_turn_remaining_lp')
         field_type_id = [x[0] for x in Constants.field_types if x[1] == field_type][0]        
+        standard_enemy_card_position = col3.selectbox("Opp card position", options=["Defense", "Attack"], key='last_turn_standard_enemy_card_position')
+        standard_opp_remaining_cards = col4.number_input("Opp cards left", value=33, min_value=1, max_value=35, key='last_turn_standard_remaining_opp_cards')
+        is_standard_enemy_card_in_atk = standard_enemy_card_position == "Attack"
+        enemy_card = next((card for card in opp_cards_to_play_order if card.cards_left_in_opp_deck == standard_opp_remaining_cards), None)
+        if enemy_card:
+            st.write(f"Opp card: {enemy_card.name} ({enemy_card.attack}/{enemy_card.defense}) {enemy_card.guardian_star} (👍{Constants.guardian_star_weak_against[enemy_card.guardian_star]} /👎{Constants.guardian_star_strong_against[enemy_card.guardian_star]})")
         
         search = st.button("Search")
 
@@ -656,7 +677,7 @@ with st.expander("Last Turn"):
                 if found_drop:
                     break
                 
-                possible_battle_phase_actions = generate_attack_combinations_from_cards_in_field(enemy_card,remaining_enemy_LP,main_phase_action,is_enemy_card_in_atk)
+                possible_battle_phase_actions = generate_attack_combinations_from_cards_in_field(enemy_card,remaining_enemy_LP,main_phase_action,is_standard_enemy_card_in_atk)
                 
                 for j,battle_phase_actions in enumerate(possible_battle_phase_actions):
                     play = Play(seed_index_at_start_of_last_turn,game_mode)
@@ -675,12 +696,18 @@ with st.expander("Last Turn"):
                 st.write(play)
 
     if initial_seed_index is not None and input_method == "Simplified Mode":        
-        col1,col2,col3,col4,col5= st.columns(5)
+        col1, col2, col3, col4, col5, col6, col7 = st.columns([1, 1, 1, 1.5, 1.2, 1.2, 1.8], vertical_alignment='bottom')
         max_fusions = col1.number_input("How many fusions can you make", min_value=0, max_value = 5,  value=1, key='max_fusions')
         max_equips = col2.number_input("How many equips can you make", min_value=0, max_value = 5,  value=0, key='max_equips')        
         max_drops = col3.number_input("How many drops can you make", min_value=0, max_value = 5,  value=3, key='max_drops')                
         is_gs_animation_possible = col4.selectbox(label = 'Guardian Star animation possible?',options=['No','Yes'],index=0,key='is_gs_animation_possible')
         is_gs_animation_possible = True if is_gs_animation_possible == 'Yes' else False
+        simplified_enemy_card_position = col5.selectbox("Opponent's Card Position", options=["Defense", "Attack"], key='last_turn_simplified_enemy_card_position')
+        simplified_opp_remaining_cards = col6.number_input("Cards left in Opp's deck", value=33, min_value=1, max_value=35, key='last_turn_simplified_remaining_opp_cards')
+        is_simplified_enemy_card_in_atk = simplified_enemy_card_position == "Attack"
+        simplified_enemy_card = next((card for card in opp_cards_to_play_order if card.cards_left_in_opp_deck == simplified_opp_remaining_cards), None)
+        if simplified_enemy_card:
+            col7.write(f"{simplified_enemy_card.name} ({simplified_enemy_card.attack}/{simplified_enemy_card.defense}) {simplified_enemy_card.guardian_star}")
         
         search = st.button('Search')
         if search and desired_drop_card_ids == '':
@@ -700,7 +727,7 @@ with st.expander("Last Turn"):
                     max_fusions,
                     max_equips,
                     max_drops,
-                    is_enemy_card_in_atk,
+                    is_simplified_enemy_card_in_atk,
                     is_gs_animation_possible
                 )
                 total_plays = sum(len(plays) for plays in plays_by_drop.values())
@@ -715,3 +742,43 @@ with st.expander("Last Turn"):
                         title = f"Fusions: {num_fusions}, Drops: {num_drops}, Equips: {num_equips} - {play.drop_card.cardID}: {play.drop_card.name}"
                         with st.expander(title):
                             st.text(str(play))
+
+
+# Fusion calculator
+with st.expander("Fusion calculator (optional utility)"):
+    selected_fusion_card_ids = []
+    fusion_card_options = [f"{card['Id']}: {card['Name']}" for card in Constants.card_data]
+    fusion_card_columns = st.columns(5)
+
+    for index, column in enumerate(fusion_card_columns):
+        selected_card = column.selectbox(
+            f"Card {index + 1}",
+            options=fusion_card_options,
+            key=f"fusion_calculator_card_{index}",
+            index=None,
+            placeholder="Select a card",
+        )
+        if selected_card:
+            selected_fusion_card_ids.append(int(selected_card.split(":", 1)[0]))
+
+    if len(selected_fusion_card_ids) >= 2:
+        selected_fusion_cards = get_card_data_from_card_ids(selected_fusion_card_ids)
+        fusion_results = get_strongest_fusions_from_hand(selected_fusion_cards)
+
+        if fusion_results:
+            for fusion_combination, result in fusion_results:
+                input_cards = [selected_fusion_cards[index] for index in fusion_combination]
+                fusion_materials = " + ".join(
+                    f"{card.cardID}: {card.name}" for card in input_cards
+                )
+                guardian_stars = " / ".join(result.guardian_stars)
+                st.write(
+                    f"{fusion_materials} = "
+                    f"{result.cardID}: {result.name} ({result.attack}/{result.defense}) {guardian_stars}"
+                )
+        else:
+            st.info("No valid fusions or equips found for the selected cards.")
+    else:
+        st.info("Select at least two cards to calculate fusions.")
+
+    st.image("guardian_stars.png", width=400)
