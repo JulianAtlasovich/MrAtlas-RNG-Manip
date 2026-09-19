@@ -470,6 +470,7 @@ class Play:
     text = '{}'.format(self.main_phase_action)
     for bpa in self.battle_phase_actions:
       text+='{}'.format(str(bpa))
+    text+='end of duel: seed_index_delta: {}, current_seed_index {}\n'.format(Constants.anims_steps_adv['END_OF_DUEL_15_CARD_MOD'] if self.game_mode == '15 Card Mod' else Constants.anims_steps_adv['END_OF_DUEL'],self.final_seed_index)
     text+='{}: {}'.format(self.drop_card.cardID,self.drop_card.name)
     return text
 

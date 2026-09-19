@@ -158,18 +158,22 @@ if st.button('Reset duel',key="reset_duel"):
 
 # Section 2
 with st.expander("2: Identify the seed"):
+    
     duelists = get_list_of_opponent_names_st()
-    min_seed_index, max_seed_index,load_sample_deck_order = st.columns([1.5,1.5,1], vertical_alignment="bottom")
-    load_sample_deck_order = load_sample_deck_order.checkbox("Load Sample Deck Order")
-    min_seed_index = min_seed_index.number_input("Minimum seed index to consider", min_value=0, value=0, key='min_seed_index')
-    max_seed_index = max_seed_index.number_input("Max seed to consider (0 for no limit)", min_value=0, value=0, key='max_seed_index')
+    with st.expander("Debug"):
+        st.markdown("##### Debug section")
+        min_seed_index, max_seed_index,debug_initial_seed_index,load_sample_deck_order = st.columns(4, vertical_alignment="bottom")
+        load_sample_deck_order = load_sample_deck_order.checkbox("Load Sample Deck Order")
+        min_seed_index = min_seed_index.number_input("Minimum seed index to consider", min_value=0, value=0, key='min_seed_index')
+        max_seed_index = max_seed_index.number_input("Max seed to consider (0 for no limit)", min_value=0, value=0, key='max_seed_index')
+        debug_initial_seed_index = debug_initial_seed_index.number_input("Debug initial seed index override",min_value=0,value=None,step=1,help="Use this seed index instead of identifying it from the opening hand.")
     opponent_name,opponent_data,_ = st.columns([1.5,1.5,1], vertical_alignment="top")
     opponent_name = opponent_name.selectbox("Select the opponent:",options=duelists)
     opponent_id = get_opponent_id_by_name(opponent_name)
     opponent_data = opponent_data.text(f'{Constants.opponents_strongest_card_description.get(opponent_id,"N/A")}')
 
     opponent_id = get_opponent_id_by_name(opponent_name)
-    initial_seed_index = None
+    initial_seed_index = debug_initial_seed_index
     
     if 'first_card_index_in_player_deck_with_multiple_options' not in st.session_state:
         st.session_state['first_card_index_in_player_deck_with_multiple_options'] = None  
@@ -263,7 +267,7 @@ with st.expander("2: Identify the seed"):
 
     # First guess at possible seed indexes   
    
-    if len(selected_player_cards)>=5:
+    if len(selected_player_cards)>=5 and debug_initial_seed_index is None:
         possible_seed_indexes = get_initial_possible_seeds(player_card_ids_in_deck,selected_player_cards,min_seed_index,max_seed_index) 
     if len(possible_seed_indexes) > 0: 
         # Iterate over possible seed indexes and discard them based on the opponent cards
@@ -275,8 +279,8 @@ with st.expander("2: Identify the seed"):
                     possible_seed_indexes.remove(possible_seed_index)
                     break
         
-    if len(possible_seed_indexes)==0 and len(selected_player_cards)>=5:
-        st.write(':red[No possible seed indexes found with that shuffling order].\n\n Make sure you enter duel in deck numerical order. Review your card selection. Remember to reset your console before each duel]')
+    if len(possible_seed_indexes)==0 and len(selected_player_cards)>=5 and debug_initial_seed_index is None:
+        st.write(':red[No possible seed indexes found with that shuffling order].\n\n Make sure you enter duel in deck numerical order. Review your card selection. Remember to reset your console before each duel')
     if len(possible_seed_indexes)>=1:                
         st.session_state['list_of_possible_opp_decks'] = []
         st.session_state['list_of_possible_player_decks'] = []
@@ -316,9 +320,11 @@ with st.expander("2: Identify the seed"):
         if should_show_first_opponent_card:
             st.rerun()
     
-    if possible_seed_indexes is not None and len(possible_seed_indexes)==1:
+    if possible_seed_indexes is not None and len(possible_seed_indexes)==1 and debug_initial_seed_index is None:
         initial_seed_index = possible_seed_indexes[0]
         st.write('initial seed index: ',initial_seed_index)
+    elif debug_initial_seed_index is not None:
+        st.caption(f'Using debug initial seed index: {initial_seed_index}')
 
 
 # Section 3
